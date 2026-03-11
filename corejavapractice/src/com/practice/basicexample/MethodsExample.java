@@ -1,4 +1,6 @@
-public class Methods1 {  
+package com.practice.basicexample;
+
+public class MethodsExample {
     static void greet() {  
         System.out.println("Hello from the static method!");  
     }  
@@ -6,8 +8,8 @@ public class Methods1 {
         System.out.println("Goodbye from a non-static method!");  
     }  
     public static void main(String args[]) {  
-        Methods1 obj = new Methods1();  
+        MethodsExample obj = new MethodsExample();
         obj.farewell();
-        Methods1.greet(); 
+        MethodsExample.greet();
     }  
 }  

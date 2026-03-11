@@ -1,5 +1,6 @@
-public class DataTypes  
-{  
+package com.practice.basicexample;
+
+public class DataTypesExample {
     public static void main(String args[])  
     {  
         boolean flag = true;  
