@@ -2,7 +2,7 @@ package com.practice.objects;
 
 import com.practice.encapsulations.AccountExample;
 
-public class Main {
+public class HashCodeAndObjects {
     public static void main(String[] args) {
         Object obj = new Object();
         System.out.println("Object as String: " + obj.toString());
