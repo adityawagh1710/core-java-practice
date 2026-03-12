@@ -52,7 +52,7 @@ public class EmployeeOperations {
     }
 
     // 4. Employees by department
-    static void printEmployeesByDepartment(List<EmployeeModel> employeeModels) {
+    static void printEmployeesByItDepartment(List<EmployeeModel> employeeModels) {
         System.out.println("4. Employees in department: " + EmployeeModel.DEPT_IT);
 
         for (EmployeeModel e : employeeModels) {

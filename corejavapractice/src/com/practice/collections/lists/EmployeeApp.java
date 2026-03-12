@@ -51,7 +51,7 @@ public class EmployeeApp {
         printGenderCount(employeeModels);
 
         // 4. All employees in a specific department (example: "IT")
-        printEmployeesByDepartment(employeeModels);
+        printEmployeesByItDepartment(employeeModels);
 
         // 5. Average salary of male & female employees
         printAverageSalaryByGender(employeeModels);
