@@ -1,8 +1,8 @@
 package com.practice.collections;
 
 public class UserModelExample {
-    int id;
-    String name;
+    int id = 0;
+    String name = null;
 
     UserModelExample(int id, String name) {
         this.id = id;
@@ -27,6 +27,6 @@ public class UserModelExample {
 
     @Override
     public String toString() {
-        return "User{id=" + id + ", name='" + name + "'}";
+        return " User {id = " + id + ", name = '" + name + "'}";
     }
 }
