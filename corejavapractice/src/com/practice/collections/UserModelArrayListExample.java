@@ -2,16 +2,16 @@ package com.practice.collections;
 
 import java.util.ArrayList;
 
-public class SimpleUserModelArrayListExample {
+public class UserModelArrayListExample {
     public static void main(String[] args) {
 
-        ArrayList<SimpleUserModelExample> users = new ArrayList<>();
+        ArrayList<UserModelExample> users = new ArrayList<>();
 
-        users.add(new SimpleUserModelExample(1, "Aditya"));
-        users.add(new SimpleUserModelExample(2, "Akshay"));
-        users.add(new SimpleUserModelExample(3, "Shivam"));
+        users.add(new UserModelExample(1, "Aditya"));
+        users.add(new UserModelExample(2, "Akshay"));
+        users.add(new UserModelExample(3, "Shivam"));
 
-        for (SimpleUserModelExample user : users) {
+        for (UserModelExample user : users) {
             System.out.println(user.id + " " + user.name);
         }
     }
