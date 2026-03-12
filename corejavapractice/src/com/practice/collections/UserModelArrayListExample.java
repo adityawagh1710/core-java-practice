@@ -12,7 +12,6 @@ public class UserModelArrayListExample {
         users.add(new UserModelExample(3, "Shivam"));
 
         users.addLast(new UserModelExample(4, "XYZ"));
-        
         users.addFirst(new UserModelExample(0, "ABC"));
 
         for (UserModelExample user : users) {
