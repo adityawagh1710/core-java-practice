@@ -1,17 +1,29 @@
 package com.practice.collections.lists;
 
 public class EmployeeModel {
+    public static final String GENDER_MALE = "Male";
+    public static final String GENDER_FEMALE = "Female";
+    public static final String DEPT_IT = "IT";
+    
     int id;
     String name;
     double salary;
     int age;
-    String gender;       // "Male" or "Female"
+    String gender;
     String deptName;
     String managerName;
     String city;
 
-    public EmployeeModel(int id, String name, double salary, int age,
-                         String gender, String deptName, String managerName, String city) {
+    public EmployeeModel(
+            int id,
+            String name,
+            double salary,
+            int age,
+            String gender,
+            String deptName,
+            String managerName,
+            String city
+    ) {
         this.id = id;
         this.name = name;
         this.salary = salary;

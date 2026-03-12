@@ -18,7 +18,7 @@ public class EmployeeOperations {
         }
 
         System.out.println("1. Employee with highest salary:");
-        System.out.println(" :-> " + max);
+        System.out.println(":-> " + max);
         System.out.println();
     }
 
@@ -32,7 +32,7 @@ public class EmployeeOperations {
             }
         }
         System.out.println("2. Employee with lowest salary:");
-        System.out.println("   :-> " + min);
+        System.out.println(":-> " + min);
         System.out.println();
     }
 
@@ -41,22 +41,22 @@ public class EmployeeOperations {
         int male = 0, female = 0;
 
         for (EmployeeModel e : employeeModels) {
-            if ("Male".equalsIgnoreCase(e.getGender())) male++;
-            else if ("Female".equalsIgnoreCase(e.getGender())) female++;
+            if (EmployeeModel.GENDER_MALE.equalsIgnoreCase(e.getGender())) male++;
+            else if (EmployeeModel.GENDER_FEMALE.equalsIgnoreCase(e.getGender())) female++;
         }
 
         System.out.println("3. Gender count:");
-        System.out.println("   Male   : " + male);
-        System.out.println("   Female : " + female);
+        System.out.println("Male   : " + male);
+        System.out.println("Female : " + female);
         System.out.println();
     }
 
     // 4. Employees by department
     static void printEmployeesByDepartment(List<EmployeeModel> employeeModels) {
-        System.out.println("4. Employees in department: " + "IT");
+        System.out.println("4. Employees in department: " + EmployeeModel.DEPT_IT);
 
         for (EmployeeModel e : employeeModels) {
-            if ("IT".equalsIgnoreCase(e.getDeptName())) {
+            if (EmployeeModel.DEPT_IT.equalsIgnoreCase(e.getDeptName())) {
                 System.out.println("IT Dept : " + e);
             }
         }
@@ -70,10 +70,10 @@ public class EmployeeOperations {
         int maleCount = 0, femaleCount = 0;
 
         for (EmployeeModel e : employeeModels) {
-            if ("Male".equalsIgnoreCase(e.getGender())) {
+            if (EmployeeModel.GENDER_MALE.equalsIgnoreCase(e.getGender())) {
                 maleSum += e.getSalary();
                 maleCount++;
-            } else if ("Female".equalsIgnoreCase(e.getGender())) {
+            } else if (EmployeeModel.GENDER_FEMALE.equalsIgnoreCase(e.getGender())) {
                 femaleSum += e.getSalary();
                 femaleCount++;
             }
@@ -126,7 +126,7 @@ public class EmployeeOperations {
         System.out.println("8. Employees in city: " + city);
 
         for (EmployeeModel e : employeeModels) {
-            if (city.equalsIgnoreCase(e.city)) System.out.println(" :-> " + e);
+            if (city.equalsIgnoreCase(e.city)) System.out.println(":-> " + e);
         }
         System.out.println();
     }
@@ -152,7 +152,7 @@ public class EmployeeOperations {
         Map<String, List<EmployeeModel>> femalesByCity = new HashMap<>();
 
         for (EmployeeModel e : employeeModels) {
-            if ("Female".equalsIgnoreCase(e.getGender())) {
+            if (EmployeeModel.GENDER_FEMALE.equalsIgnoreCase(e.getGender())) {
                 String city = e.getCity();
                 femalesByCity.computeIfAbsent(city, k -> new ArrayList<>()).add(e);
             }
@@ -161,11 +161,56 @@ public class EmployeeOperations {
         System.out.println("10. Female employees by city:");
         for (Map.Entry<String, List<EmployeeModel>> entry : femalesByCity.entrySet()) {
 
-            System.out.println("   City: " + entry.getKey());
+            System.out.println("City: " + entry.getKey());
 
             for (EmployeeModel fem : entry.getValue()) {
-                System.out.println(" :-> " + fem);
+                System.out.println(":-> " + fem);
             }
+        }
+
+        System.out.println();
+    }
+
+    // 11. Youngest employee
+    static void printYoungestEmployee(List<EmployeeModel> amps) {
+        EmployeeModel youngest = amps.getFirst();
+
+        for (EmployeeModel e : amps) {
+            if (e.getAge() < youngest.getAge()) {
+                youngest = e;
+            }
+        }
+
+        System.out.println("11. Youngest employee:");
+        System.out.println("   " + youngest + "\n");
+    }
+
+    // 12. Manager with most direct reports
+    static void printManagerWithMostEmployees(List<EmployeeModel> emps) {
+        Map<String, Integer> managerCount = new HashMap<>();
+
+        for (EmployeeModel e : emps) {
+            String mgr = e.getManagerName();
+            if (mgr != null && !mgr.trim().isEmpty()) {
+                managerCount.put(mgr, managerCount.getOrDefault(mgr, 0) + 1);
+            }
+        }
+
+        String topManager = null;
+        int maxCount = 0;
+        for (Map.Entry<String, Integer> entry : managerCount.entrySet()) {
+            if (entry.getValue() > maxCount) {
+                maxCount = entry.getValue();
+                topManager = entry.getKey();
+            }
+        }
+
+        System.out.println("12. Manager with most employees under them:");
+
+        if (topManager != null) {
+            System.out.println("   " + topManager + " → " + maxCount + " direct reports");
+        } else {
+            System.out.println("No managers found");
         }
 
         System.out.println();

@@ -70,5 +70,11 @@ public class EmployeeApp {
 
         // 10. Female employees information city-wise
         printFemaleEmployeesByCity(employeeModels);
+
+        // 11. Youngest employee
+        printYoungestEmployee(employeeModels);
+
+        // 12. Manager with most direct reports
+        printManagerWithMostEmployees(employeeModels);
     }
 }
