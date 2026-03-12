@@ -3,7 +3,7 @@ package com.practice.collections;
 import java.util.ArrayList;
 import java.util.List;
 
-public class ListExample {
+public class BasicListExample {
     public static void main(String[] args) {
 
         // 1: LHS preferred for generics RHS not needed
