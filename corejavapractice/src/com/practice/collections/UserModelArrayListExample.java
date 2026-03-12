@@ -14,5 +14,7 @@ public class UserModelArrayListExample {
         for (UserModelExample user : users) {
             System.out.println(user.id + " " + user.name);
         }
+
+        System.out.println(users);
     }
 }
