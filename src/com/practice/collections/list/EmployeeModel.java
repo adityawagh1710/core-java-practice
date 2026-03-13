@@ -1,4 +1,4 @@
-package com.practice.collections.lists;
+package com.practice.collections.list;
 
 public class EmployeeModel {
     public static final String GENDER_MALE = "Male";

@@ -1,4 +1,4 @@
-package com.practice.collections.lists;
+package com.practice.collections.list;
 
 import java.util.*;
 

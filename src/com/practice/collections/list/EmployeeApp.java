@@ -1,9 +1,9 @@
-package com.practice.collections.lists;
+package com.practice.collections.list;
 
 import java.util.ArrayList;
 import java.util.List;
 
-import static com.practice.collections.lists.EmployeeOperations.*;
+import static com.practice.collections.list.EmployeeOperations.*;
 
 public class EmployeeApp {
 

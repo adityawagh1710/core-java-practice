@@ -32,11 +32,9 @@ class Student {
 	@Override
 	public boolean equals(Object obj) {
 		
-		if(this == obj)
-			return true;
+		if (this == obj) return true;
 		
-		if(obj == null || getClass() != obj.getClass())
-			return false;
+		if (obj == null || getClass() != obj.getClass()) return false;
 		
 		Student s = (Student) obj;
 		
@@ -46,6 +44,11 @@ class Student {
 	@Override
 	public int hashCode() {
 		return Objects.hash(id);
+	}
+	
+	@Override
+	public String toString() {
+		return "Student [id = " + id + ", name = " + name + "]";
 	}
 }
 
@@ -59,11 +62,10 @@ public class EqualsHashcodeOverrideExample {
 		System.out.println(s1.hashCode());
 		System.out.println(s2.hashCode());
 		
-		
 		// HashMap object iteration
 		HashMap<Integer, Student> map = new HashMap<>();
 		map.put(1, s1);
 		map.put(2, s2);
-		System.out.println(map.get(1).getName());
+		System.out.println(map);
 	}
 }
