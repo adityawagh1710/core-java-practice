@@ -2,7 +2,7 @@ package com.practice.collections.lists;
 
 import java.util.*;
 
-public class EmployeeManager {
+public class EmployeeManagerUsingLambda {
     static class Employee {
         private int id;
         private String name;
@@ -121,13 +121,13 @@ public class EmployeeManager {
         System.out.println("1. Employee with HIGHEST Salary:");
         List<Employee> sortedDesc = new ArrayList<>(employees);
         Collections.sort(sortedDesc, (a, b) -> Double.compare(b.getSalary(), a.getSalary()));
-        System.out.println("   " + sortedDesc.get(0));
+        System.out.println(" " + sortedDesc.get(0));
 
         // 2. Employee with LOWEST salary
         System.out.println("\n2. Employee with LOWEST Salary:");
         List<Employee> sortedAsc = new ArrayList<>(employees);
         Collections.sort(sortedAsc, (a, b) -> Double.compare(a.getSalary(), b.getSalary()));
-        System.out.println("   " + sortedAsc.get(0));
+        System.out.println(" " + sortedAsc.get(0));
 
         // 3. Count of Female and Male employees
         System.out.println("\n3. Count of Female and Male Employees:");
@@ -136,14 +136,14 @@ public class EmployeeManager {
             if (e.getGender().equalsIgnoreCase("Male")) genderCount[0]++;
             else if (e.getGender().equalsIgnoreCase("Female")) genderCount[1]++;
         });
-        System.out.println("   Male   : " + genderCount[0]);
-        System.out.println("   Female : " + genderCount[1]);
+        System.out.println("Male   : " + genderCount[0]);
+        System.out.println("Female : " + genderCount[1]);
 
         // 4. All employees belonging to a specific dept
         String targetDept = "Engineering";
         System.out.println("\n4. All Employees in '" + targetDept + "' Department:");
         employees.forEach(e -> {
-            if (e.getDeptName().equalsIgnoreCase(targetDept)) System.out.println("   " + e);
+            if (e.getDeptName().equalsIgnoreCase(targetDept)) System.out.println(" " + e);
         });
 
         // 5. Average salary of Male & Female employees
@@ -183,7 +183,7 @@ public class EmployeeManager {
                     dCount[0]++;
                 }
             });
-            System.out.printf("   %-15s : %.2f%n", dept, dTotal[0] / dCount[0]);
+            System.out.printf("%-15s : %.2f%n", dept, dTotal[0] / dCount[0]);
         });
 
         // 8. Employees belonging to a specific city
@@ -191,7 +191,7 @@ public class EmployeeManager {
         System.out.println("\n8. Employees in '" + targetCity + "':");
         employees.forEach(e -> {
             if (e.getCity().equalsIgnoreCase(targetCity))
-                System.out.println("   " + e);
+                System.out.println(" " + e);
         });
 
         // 9. Count of employees for each city
@@ -206,7 +206,7 @@ public class EmployeeManager {
             employees.forEach(e -> {
                 if (e.getCity().equalsIgnoreCase(city)) count[0]++;
             });
-            System.out.println("   " + city + " : " + count[0]);
+            System.out.println(" " + city + " : " + count[0]);
         });
 
         // 10. Female employees for each city
@@ -217,8 +217,8 @@ public class EmployeeManager {
                     !e.getCity().equalsIgnoreCase(city) ||
                             !e.getGender().equalsIgnoreCase("Female"));
             if (!femalesInCity.isEmpty()) {
-                System.out.println("   City: " + city);
-                femalesInCity.forEach(e -> System.out.println("     -> " + e));
+                System.out.println("City: " + city);
+                femalesInCity.forEach(e -> System.out.println("-> " + e));
             }
         });
 
@@ -232,17 +232,17 @@ public class EmployeeManager {
         List<Employee> aboveAvg = new ArrayList<>(employees);
         aboveAvg.removeIf(e -> e.getSalary() <= avgSalary);
         Collections.sort(aboveAvg, (a, b) -> Double.compare(b.getSalary(), a.getSalary()));
-        aboveAvg.forEach(e -> System.out.println("   " + e));
+        aboveAvg.forEach(e -> System.out.println("" + e));
 
         // 12. Oldest and Youngest employee
         System.out.println("\n12. Oldest and Youngest Employee:");
         List<Employee> sortedByAge = new ArrayList<>(employees);
         
         Collections.sort(sortedByAge, (a, b) -> Integer.compare(b.getAge(), a.getAge()));
-        System.out.println("   Oldest  -> " + sortedByAge.get(0));
+        System.out.println("Oldest  -> " + sortedByAge.get(0));
         
         Collections.sort(sortedByAge, (a, b) -> Integer.compare(a.getAge(), b.getAge()));
-        System.out.println("   Youngest-> " + sortedByAge.get(0));
+        System.out.println("Youngest-> " + sortedByAge.get(0));
         
     }
 }
