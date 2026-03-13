@@ -8,7 +8,7 @@ class Student {
 	int id;
 	String name;
 	
-	Student(int id,String name){
+	Student(int id,String name) {
 		this.id = id;
 		this.name = name;
 	}
@@ -30,7 +30,7 @@ class Student {
 	}
 	
 	@Override
-	public boolean equals(Object obj){
+	public boolean equals(Object obj) {
 		
 		if(this == obj)
 			return true;
@@ -44,7 +44,7 @@ class Student {
 	}
 	
 	@Override
-	public int hashCode(){
+	public int hashCode() {
 		return Objects.hash(id);
 	}
 }
