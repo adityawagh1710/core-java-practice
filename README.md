@@ -1,121 +1,240 @@
-## Core Java
+# ☕ Core Java 🎯
 
-**Core Java** refers to the fundamental concepts and basic features of the Java programming language. It forms the foundation required to build Java applications and understand advanced Java frameworks.
+**Core Java** refers to the fundamental concepts and core features of the Java programming language. It provides the **foundation required to build Java applications** and understand advanced frameworks such as Spring Boot and Jakarta EE.
 
-Core Java mainly includes:
+Core Java focuses on:
 
-* **Basic Syntax and Data Types** – variables, operators, control statements (`if`, `switch`, `loops`)
-* **Object-Oriented Programming (OOP)** – classes, objects, inheritance, polymorphism, abstraction, encapsulation
-* **Exception Handling** – handling runtime errors using `try`, `catch`, `finally`, `throw`, and `throws`
-* **Collections Framework** – data structures like `ArrayList`, `HashMap`, `HashSet`, `LinkedList`
-* **Multithreading** – running multiple threads simultaneously
-* **File Handling (I/O)** – reading and writing files
-* **Java Standard Libraries** – commonly used APIs provided by Java
+* Java language fundamentals
+* Object-Oriented Programming (OOP)
+* Exception handling
+* Collections Framework
+* Multithreading and concurrency
+* File handling and standard libraries
 
+---
 
-Below roadmap outlines the essential topics to learn in **Core Java**, starting from basic programming concepts to advanced language features.
+# 📚 Core Java Learning Roadmap
 
-### 1. Java Fundamentals
+The roadmap below outlines the **essential topics to master Core Java**, starting from basic programming concepts to modern Java features.
 
-* Java installation and setup (JDK, JVM, JRE)
-* Writing and running a simple Java program
-* Java syntax and structure
+---
+
+# 1️⃣ Java Fundamentals
+
+* Java architecture (**JDK, JVM, JRE**)
+* Installing and configuring Java
+* Writing and running your first Java program
+* Java syntax and program structure
 * Data types and variables
-* Operators in Java
+* Operators
 * Type casting
 
-### 2. Control Flow Statements
+---
 
-* `if`, `if-else`, `switch`
-* `for`, `while`, `do-while` loops
-* `break`, `continue`, `return`
+# 2️⃣ Control Flow Statements
 
-### 3. Object-Oriented Programming (OOP)
+Control how a program executes.
+
+**Conditional Statements**
+
+* `if`
+* `if-else`
+* `switch`
+
+**Loops**
+
+* `for`
+* `while`
+* `do-while`
+
+**Jump Statements**
+
+* `break`
+* `continue`
+* `return`
+
+---
+
+# 3️⃣ Object-Oriented Programming (OOP)
+
+Java is primarily an **object-oriented language**.
+
+Concepts include:
 
 * Classes and Objects
 * Constructors
-* Method overloading
+* Method Overloading
 * Inheritance
 * Polymorphism
 * Abstraction
 * Encapsulation
-* `this` and `super` keywords
+* `this` keyword
+* `super` keyword
 
-### 4. Packages and Access Modifiers
+---
 
-* Creating and using packages
-* Access modifiers (`public`, `private`, `protected`, default)
+# 4️⃣ Packages & Access Modifiers
 
-### 5. Interfaces and Abstract Classes
+Organizing code and controlling access.
+
+* Creating packages
+* Importing packages
+* Access modifiers
+
+    * `public`
+    * `private`
+    * `protected`
+    * `default`
+
+---
+
+# 5️⃣ Interfaces & Abstract Classes
+
+Used to achieve **abstraction** in Java.
 
 * Abstract classes
 * Interfaces
 * Functional interfaces
-* Default and static methods in interfaces
+* Default methods
+* Static methods in interfaces
 
-### 6. Exception Handling
+---
+
+# 6️⃣ Exception Handling
+
+Handling runtime errors gracefully.
 
 * Types of exceptions
-* `try`, `catch`, `finally`
-* `throw` and `throws`
+* `try`
+* `catch`
+* `finally`
+* `throw`
+* `throws`
 * Custom exceptions
 
-### 7. Java Collections Framework
+---
 
-* List (`ArrayList`, `LinkedList`, `Vector`)
-* Set (`HashSet`, `LinkedHashSet`, `TreeSet`)
-* Map (`HashMap`, `LinkedHashMap`, `TreeMap`)
-* Iterators and enhanced `for` loop
+# 7️⃣ Java Collections Framework
 
-### 8. Generics
+The **Collections Framework** provides ready-to-use data structures.
+
+### List
+
+* `ArrayList`
+* `LinkedList`
+* `Vector`
+
+### Set
+
+* `HashSet`
+* `LinkedHashSet`
+* `TreeSet`
+
+### Map
+
+* `HashMap`
+* `LinkedHashMap`
+* `TreeMap`
+
+### Iteration
+
+* `Iterator`
+* Enhanced `for` loop
+
+---
+
+# 8️⃣ Generics
+
+Generics allow **type-safe collections and reusable code**.
 
 * Generic classes
 * Generic methods
 * Bounded types
 * Wildcards
 
-### 9. Lambda Expressions & Functional Programming
+---
+
+# 9️⃣ Lambda Expressions & Functional Programming
+
+Introduced in **Java 8** for concise code.
 
 * Lambda expressions
 * Functional interfaces
 * Method references
-* Built-in functional interfaces (`Predicate`, `Function`, `Consumer`, `Supplier`)
+* Built-in functional interfaces
 
-### 10. Streams API
+Examples:
 
-* Stream creation
-* Intermediate operations (`map`, `filter`)
-* Terminal operations (`forEach`, `collect`)
-* Stream pipelines
+* `Predicate`
+* `Function`
+* `Consumer`
+* `Supplier`
 
-### 11. Multithreading & Concurrency
+---
 
-* Thread class and Runnable interface
+# 🔟 Streams API
+
+Streams help process collections **efficiently and declaratively**.
+
+* Creating streams
+* Intermediate operations
+
+    * `map`
+    * `filter`
+* Terminal operations
+
+    * `forEach`
+    * `collect`
+
+---
+
+# 1️⃣1️⃣ Multithreading & Concurrency
+
+Running multiple tasks simultaneously.
+
+* `Thread` class
+* `Runnable` interface
 * Thread lifecycle
 * Synchronization
 * Executor framework
 * Parallel streams
 
-### 12. File Handling (Java I/O & NIO)
+---
+
+# 1️⃣2️⃣ File Handling (Java I/O & NIO)
+
+Working with files and directories.
 
 * File reading and writing
 * Buffered streams
-* File and directory operations
+* File operations
 * NIO package
 
-### 13. Java Date and Time API
+---
+
+# 1️⃣3️⃣ Java Date & Time API
+
+Modern date-time handling.
 
 * `LocalDate`
 * `LocalTime`
 * `LocalDateTime`
 * Formatting and parsing dates
 
-### 14. Important Java 21 Concepts
+---
+
+# 1️⃣4️⃣ Modern Java (Java 21 Features)
+
+Latest Java language enhancements.
 
 * Records
 * Pattern Matching
 * Sealed Classes
 * Virtual Threads (Project Loom)
+
+---
+
+# 🧠 Java Data Structures Overview
 
 ```text
 Java Data Structures
@@ -174,3 +293,5 @@ Java Data Structures
             ├── Hashtable
             └── WeakHashMap
 ```
+
+---
