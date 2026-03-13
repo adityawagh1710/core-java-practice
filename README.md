@@ -1,4 +1,4 @@
-# ☕ Core Java 🎯
+## ☕ Core Java 🎯
 
 **Core Java** refers to the fundamental concepts and core features of the Java programming language. It provides the **foundation required to build Java applications** and understand advanced frameworks such as Spring Boot and Jakarta EE.
 
@@ -13,13 +13,13 @@ Core Java focuses on:
 
 ---
 
-# 📚 Core Java Learning Roadmap
+## 📚 Core Java Learning Roadmap
 
 The roadmap below outlines the **essential topics to master Core Java**, starting from basic programming concepts to modern Java features.
 
 ---
 
-# 1️⃣ Java Fundamentals
+## 1️⃣ Java Fundamentals
 
 * Java architecture (**JDK, JVM, JRE**)
 * Installing and configuring Java
@@ -31,7 +31,7 @@ The roadmap below outlines the **essential topics to master Core Java**, startin
 
 ---
 
-# 2️⃣ Control Flow Statements
+## 2️⃣ Control Flow Statements
 
 Control how a program executes.
 
@@ -55,7 +55,7 @@ Control how a program executes.
 
 ---
 
-# 3️⃣ Object-Oriented Programming (OOP)
+## 3️⃣ Object-Oriented Programming (OOP)
 
 Java is primarily an **object-oriented language**.
 
@@ -73,7 +73,7 @@ Concepts include:
 
 ---
 
-# 4️⃣ Packages & Access Modifiers
+## 4️⃣ Packages & Access Modifiers
 
 Organizing code and controlling access.
 
@@ -88,7 +88,7 @@ Organizing code and controlling access.
 
 ---
 
-# 5️⃣ Interfaces & Abstract Classes
+## 5️⃣ Interfaces & Abstract Classes
 
 Used to achieve **abstraction** in Java.
 
@@ -100,7 +100,7 @@ Used to achieve **abstraction** in Java.
 
 ---
 
-# 6️⃣ Exception Handling
+## 6️⃣ Exception Handling
 
 Handling runtime errors gracefully.
 
@@ -114,7 +114,7 @@ Handling runtime errors gracefully.
 
 ---
 
-# 7️⃣ Java Collections Framework
+## 7️⃣ Java Collections Framework
 
 The **Collections Framework** provides ready-to-use data structures.
 
@@ -143,7 +143,7 @@ The **Collections Framework** provides ready-to-use data structures.
 
 ---
 
-# 8️⃣ Generics
+## 8️⃣ Generics
 
 Generics allow **type-safe collections and reusable code**.
 
@@ -154,7 +154,7 @@ Generics allow **type-safe collections and reusable code**.
 
 ---
 
-# 9️⃣ Lambda Expressions & Functional Programming
+## 9️⃣ Lambda Expressions & Functional Programming
 
 Introduced in **Java 8** for concise code.
 
@@ -172,7 +172,7 @@ Examples:
 
 ---
 
-# 🔟 Streams API
+## 🔟 Streams API
 
 Streams help process collections **efficiently and declaratively**.
 
@@ -188,7 +188,7 @@ Streams help process collections **efficiently and declaratively**.
 
 ---
 
-# 1️⃣1️⃣ Multithreading & Concurrency
+## 1️⃣1️⃣ Multithreading & Concurrency
 
 Running multiple tasks simultaneously.
 
@@ -201,7 +201,7 @@ Running multiple tasks simultaneously.
 
 ---
 
-# 1️⃣2️⃣ File Handling (Java I/O & NIO)
+## 1️⃣2️⃣ File Handling (Java I/O & NIO)
 
 Working with files and directories.
 
@@ -212,7 +212,7 @@ Working with files and directories.
 
 ---
 
-# 1️⃣3️⃣ Java Date & Time API
+## 1️⃣3️⃣ Java Date & Time API
 
 Modern date-time handling.
 
@@ -223,7 +223,7 @@ Modern date-time handling.
 
 ---
 
-# 1️⃣4️⃣ Modern Java (Java 21 Features)
+## 1️⃣4️⃣ Modern Java (Java 21 Features)
 
 Latest Java language enhancements.
 
@@ -234,7 +234,7 @@ Latest Java language enhancements.
 
 ---
 
-# 🧠 Java Data Structures Overview
+## 🧠 Java Data Structures Overview
 
 ```text
 Java Data Structures
@@ -293,5 +293,3 @@ Java Data Structures
             ├── Hashtable
             └── WeakHashMap
 ```
-
----
