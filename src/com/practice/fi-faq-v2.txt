@@ -1,0 +1,120 @@
+--------------------------------------------------------------------------------
+[ SECTION 1: CORE CONCEPTS ]
+--------------------------------------------------------------------------------
+
+01. WHAT IS FI?
+    A Functional Interface is an interface that contains EXACTLY ONE abstract 
+    method. 
+    
+    >> EXAMPLE:
+       @FunctionalInterface
+       interface Calculator {
+           int operate(int a, int b); // The "Single" abstract method
+       }
+
+02. WHAT IS THE IMPORTANCE/PURPOSE OF FI?
+    It enables "Behavior Parameterization"—passing logic into methods just 
+    like you pass variables.
+
+    >> EXAMPLE:
+       void execute(Calculator calc) { 
+           System.out.println(calc.operate(5, 5)); 
+       }
+       // You can pass different logic (addition, subtraction) to this same method.
+
+03. WHAT IS THE DIFF B/W FI AND A REGULAR INTERFACE?
+    * Regular: Can have multiple methods (e.g., List, ResultSet).
+    * FI: Limited to one abstract method to ensure Lambda compatibility.
+
+    >> EXAMPLE (Regular Interface):
+       interface Vehicle {
+           void start();
+           void stop(); // Lambda cannot implement this; it's ambiguous.
+       }
+
+04. IS IT POSSIBLE TO ADD MORE THAN ONE METHOD IN FI?
+    Yes, as long as only ONE is abstract. You can have multiple default/static.
+
+    >> EXAMPLE:
+       @FunctionalInterface
+       interface Printer {
+           void print(String msg); // Abstract
+           default void scan() { System.out.println("Scanning..."); } // Default
+           static void info() { System.out.println("Printer v1.0"); } // Static
+       }
+
+--------------------------------------------------------------------------------
+[ SECTION 2: LAMBDA EXPRESSIONS (LE) ]
+--------------------------------------------------------------------------------
+
+05. WHAT IS A LAMBDA EXPRESSION?
+    A concise way to write an implementation of a Functional Interface.
+
+    >> EXAMPLE:
+       // Instead of a full class, just write:
+       (name) -> System.out.println("Hello " + name);
+
+06. WHAT IS THE RELATIONSHIP B/W FI AND LE?
+    The FI is the "Data Type," and the LE is the "Value."
+
+    >> EXAMPLE:
+       // FI type = Lambda Value
+       Runnable r = () -> System.out.println("Running in a thread!");
+
+07. CAN WE IMPLEMENT LE FOR A REGULAR INTERFACE?
+    No. If there are 2+ methods, the Lambda doesn't know which one to "fill."
+
+08. WHAT IS THE SYNTAX FOR LAMBDA EXPRESSIONS?
+    >> EXAMPLE (1-line):
+       MathOperation add = (a, b) -> a + b;
+
+    >> EXAMPLE (Multi-line):
+       MathOperation complex = (a, b) -> {
+           System.out.println("Calculating...");
+           return a * b;
+       };
+
+--------------------------------------------------------------------------------
+[ SECTION 3: PRACTICAL USAGE ]
+--------------------------------------------------------------------------------
+
+09. IS IT POSSIBLE TO DO STREAM API WITHOUT FI/LE?
+    Yes, using Anonymous Inner Classes, but it's very messy.
+
+    >> EXAMPLE (Without Lambda):
+       list.stream().filter(new Predicate<String>() {
+           public boolean test(String s) { return s.startsWith("A"); }
+       });
+
+10. ARE LAMBDA EXPRESSIONS MANDATORY FOR FI?
+    No. You can use old-school Anonymous Inner Classes.
+
+    >> EXAMPLE:
+       Runnable r = new Runnable() {
+           public void run() { System.out.println("Old way!"); }
+       };
+
+11. HAVE YOU CREATED A USER DEFINED FI?
+    Yes, for specific business rules.
+
+    >> EXAMPLE:
+       @FunctionalInterface
+       interface FileCleaner {
+           boolean clean(File f);
+       }
+
+12. DO YOU KNOW ANY PRE-DEFINED FI IN JAVA?
+    The "Big Four" in java.util.function:
+
+    +--------------+-----------------------------------------------------------+
+    | INTERFACE    | PRACTICAL EXAMPLE                                         |
+    +--------------+-----------------------------------------------------------+
+    | Predicate    | Predicate<Integer> isEven = (n) -> n % 2 == 0;            |
+    | Function     | Function<String, Integer> length = (s) -> s.length();      |
+    | Consumer     | Consumer<String> printer = (s) -> System.out.println(s);  |
+    | Supplier     | Supplier<Double> random = () -> Math.random();            |
+    +--------------+-----------------------------------------------------------+
+
+================================================================================
+                            END OF DOCUMENT
+================================================================================

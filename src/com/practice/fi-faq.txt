@@ -1,0 +1,346 @@
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+
+  ╭──────────────────────────────────────────────────────────────────────────╮
+  │  Q 01  │  What is a Functional Interface (FI)?                           │
+  ╰──────────────────────────────────────────────────────────────────────────╯
+
+  ▸ An interface with EXACTLY ONE abstract method.
+  ▸ Can have any number of default or static methods — just one abstract.
+  ▸ Annotated with @FunctionalInterface (optional but recommended).
+    The compiler enforces the single-abstract-method rule.
+
+  ┌─ Example ─────────────────────────────────────────────────────────────┐
+  │                                                                        │
+  │   @FunctionalInterface                                                 │
+  │   interface Greet {                                                    │
+  │       String say(String name);   // ✔ only 1 abstract method          │
+  │   }                                                                    │
+  │                                                                        │
+  └────────────────────────────────────────────────────────────────────────┘
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+
+  ╭──────────────────────────────────────────────────────────────────────────╮
+  │  Q 02  │  What is the importance / purpose of FI?                        │
+  ╰──────────────────────────────────────────────────────────────────────────╯
+
+  ★  Enables Lambda Expressions — pass behaviour as a value, no boilerplate.
+  ★  Makes code concise and highly readable.
+  ★  Foundation of the Stream API, Comparator, event handling & callbacks.
+  ★  Supports functional programming style inside Java.
+
+  Without FI, you would need verbose anonymous inner classes every time you
+  want to pass a small piece of behaviour. FI + Lambda eliminates that.
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+
+  ╭──────────────────────────────────────────────────────────────────────────╮
+  │  Q 03  │  What is the difference between FI and a Regular Interface?     │
+  ╰──────────────────────────────────────────────────────────────────────────╯
+
+  ┌───────────────────┬──────────────────────────┬───────────────────────────┐
+  │      Point        │    Regular Interface      │   Functional Interface    │
+  ├───────────────────┼──────────────────────────┼───────────────────────────┤
+  │ Abstract methods  │  One or more             │  Exactly ONE              │
+  │ Lambda support    │  No                      │  Yes                      │
+  │ Annotation        │  Not applicable          │  @FunctionalInterface     │
+  │ Purpose           │  Define contract / type  │  Pass behaviour as value  │
+  │ Example           │  List, Map, Comparable   │  Runnable, Predicate      │
+  └───────────────────┴──────────────────────────┴───────────────────────────┘
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+
+  ╭──────────────────────────────────────────────────────────────────────────╮
+  │  Q 04  │  Is it possible to add more than one method in FI?              │
+  ╰──────────────────────────────────────────────────────────────────────────╯
+
+  ✘  Abstract methods   →  Only EXACTLY ONE allowed.
+                            Two abstract methods = compile error with @FunctionalInterface.
+
+  ✔  default methods    →  Allowed (any number)
+  ✔  static methods     →  Allowed (any number)
+  ✔  Object methods     →  equals(), toString() etc. don't count as abstract
+
+  ┌─ Example ─────────────────────────────────────────────────────────────┐
+  │                                                                        │
+  │   @FunctionalInterface                                                 │
+  │   interface Validator<T> {                                             │
+  │       boolean validate(T t);                   // ✔ 1 abstract        │
+  │                                                                        │
+  │       default Validator<T> and(Validator<T> v) {                      │
+  │           return x -> validate(x) && v.validate(x);                   │
+  │       }                                        // ✔ default OK        │
+  │                                                                        │
+  │       static Validator<String> nonEmpty() {    // ✔ static OK        │
+  │           return s -> !s.isBlank();                                    │
+  │       }                                                                │
+  │                                                                        │
+  │       String toString();                       // ✔ Object method     │
+  │   }                                                                    │
+  │                                                                        │
+  └────────────────────────────────────────────────────────────────────────┘
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+
+  ╭──────────────────────────────────────────────────────────────────────────╮
+  │  Q 05  │  What are Lambda Expressions?                                   │
+  ╰──────────────────────────────────────────────────────────────────────────╯
+
+  ▸ A short, anonymous function — no name, no class.
+  ▸ Just the parameter list and the body.
+  ▸ Think of it as: "here is the behaviour, inline, right now."
+
+  ┌─ Old Way  (Anonymous Inner Class) ────────────────────────────────────┐
+  │                                                                        │
+  │   Runnable r = new Runnable() {                                        │
+  │       public void run() {                                              │
+  │           System.out.println("Hello");                                 │
+  │       }                                                                │
+  │   };                                                                   │
+  │                                                                        │
+  └────────────────────────────────────────────────────────────────────────┘
+  ┌─ New Way  (Lambda Expression) ────────────────────────────────────────┐
+  │                                                                        │
+  │   Runnable r = () -> System.out.println("Hello");                      │
+  │                                                                        │
+  └────────────────────────────────────────────────────────────────────────┘
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+
+  ╭──────────────────────────────────────────────────────────────────────────╮
+  │  Q 06  │  What is the relationship between FI and Lambda Expressions?    │
+  ╰──────────────────────────────────────────────────────────────────────────╯
+
+  They are two sides of the same coin:
+
+      ┌──────────────────────┐          ┌──────────────────────────────┐
+      │  Functional          │  needs   │  Lambda Expression           │
+      │  Interface           │ ◄──────► │                              │
+      │  (the CONTRACT)      │          │  (the IMPLEMENTATION)        │
+      └──────────────────────┘          └──────────────────────────────┘
+
+  ▸ FI provides the target type — the method signature the lambda must match.
+  ▸ Lambda provides the implementation of that one abstract method, inline.
+  ▸ A lambda can ONLY be assigned to a Functional Interface.
+
+  ┌─ Example ─────────────────────────────────────────────────────────────┐
+  │                                                                        │
+  │   Predicate<String> isEmpty = s -> s.isEmpty();   // test(String)     │
+  │   Comparator<Integer> asc   = (a, b) -> a - b;   // compare(T, T)    │
+  │                                                                        │
+  └────────────────────────────────────────────────────────────────────────┘
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+
+  ╭──────────────────────────────────────────────────────────────────────────╮
+  │  Q 07  │  Can we implement a Lambda for a Regular Interface?             │
+  ╰──────────────────────────────────────────────────────────────────────────╯
+
+  ✘  NO.
+
+  A lambda can only implement an interface with exactly ONE abstract method.
+  If a regular interface has 2+ abstract methods, the compiler cannot determine
+  which method the lambda body is implementing → ambiguous → compile error.
+
+  ┌─ Example ─────────────────────────────────────────────────────────────┐
+  │                                                                        │
+  │   interface TwoMethods {                                               │
+  │       void doA();                                                      │
+  │       void doB();                                                      │
+  │   }                                                                    │
+  │                                                                        │
+  │   TwoMethods x = () -> System.out.println("?");  // ✘ COMPILE ERROR  │
+  │                                                                        │
+  └────────────────────────────────────────────────────────────────────────┘
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+
+  ╭──────────────────────────────────────────────────────────────────────────╮
+  │  Q 08  │  What is the syntax for Lambda Expressions?                     │
+  ╰──────────────────────────────────────────────────────────────────────────╯
+
+  General form:   (parameters)  ->  body
+                  ─────────────    ────────────────────────
+
+  ┌─ Single-line body  (no braces, no return needed) ─────────────────────┐
+  │                                                                        │
+  │   // No param                                                          │
+  │   () -> System.out.println("hi")                                       │
+  │                                                                        │
+  │   // One param  (parens optional)                                      │
+  │   name -> name.toUpperCase()                                           │
+  │                                                                        │
+  │   // Two params                                                        │
+  │   (a, b) -> a + b                                                      │
+  │                                                                        │
+  │   // With explicit types                                               │
+  │   (int a, int b) -> a + b                                              │
+  │                                                                        │
+  └────────────────────────────────────────────────────────────────────────┘
+  ┌─ Multi-line body  (braces required, return required) ─────────────────┐
+  │                                                                        │
+  │   (a, b) -> {                                                          │
+  │       int sum = a + b;                                                 │
+  │       System.out.println("Sum: " + sum);                               │
+  │       return sum;   // ← return is MANDATORY in multi-line            │
+  │   }                                                                    │
+  │                                                                        │
+  └────────────────────────────────────────────────────────────────────────┘
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+
+  ╭──────────────────────────────────────────────────────────────────────────╮
+  │  Q 09  │  Is it possible to do Stream API operations without FI & LE?   │
+  ╰──────────────────────────────────────────────────────────────────────────╯
+
+  Technically YES — practically NEVER.
+
+  Stream methods like filter(), map(), sorted() accept Functional Interfaces
+  (Predicate, Function, Comparator). You can pass anonymous inner classes
+  instead of lambdas, but the code becomes extremely verbose.
+
+  ┌─ With Lambda  (clean & idiomatic) ────────────────────────────────────┐
+  │                                                                        │
+  │   list.stream().filter(s -> s.length() > 3);                           │
+  │                                                                        │
+  └────────────────────────────────────────────────────────────────────────┘
+  ┌─ Without Lambda  (works, but ugly) ───────────────────────────────────┐
+  │                                                                        │
+  │   list.stream().filter(new Predicate<String>() {                       │
+  │       public boolean test(String s) {                                  │
+  │           return s.length() > 3;                                       │
+  │       }                                                                │
+  │   });                                                                  │
+  │                                                                        │
+  └────────────────────────────────────────────────────────────────────────┘
+
+  ► The Stream API was designed around FI + Lambdas — they are the
+    intended and idiomatic approach.
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+
+  ╭──────────────────────────────────────────────────────────────────────────╮
+  │  Q 10  │  Are Lambda Expressions mandatory for FI implementation?        │
+  ╰──────────────────────────────────────────────────────────────────────────╯
+
+  ✘  NO — lambdas are NOT mandatory. There are 3 ways to implement a FI:
+
+  ┌─ Example ─────────────────────────────────────────────────────────────┐
+  │                                                                        │
+  │   @FunctionalInterface                                                 │
+  │   interface Greeter { String greet(String name); }                     │
+  │                                                                        │
+  │   // ① Anonymous inner class  (verbose)                               │
+  │   Greeter g1 = new Greeter() {                                         │
+  │       public String greet(String name) {                               │
+  │           return "Hello, " + name;                                     │
+  │       }                                                                │
+  │   };                                                                   │
+  │                                                                        │
+  │   // ② Lambda Expression  (idiomatic ✔)                               │
+  │   Greeter g2 = name -> "Hello, " + name;                               │
+  │                                                                        │
+  │   // ③ Method Reference  (even shorter when method already exists)    │
+  │   Greeter g3 = MyClass::formatName;                                    │
+  │                                                                        │
+  └────────────────────────────────────────────────────────────────────────┘
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+
+  ╭──────────────────────────────────────────────────────────────────────────╮
+  │  Q 11  │  Have you created a User-Defined FI? (Example)                 │
+  ╰──────────────────────────────────────────────────────────────────────────╯
+
+  YES — a user-defined FI means you write the interface yourself with
+  exactly one abstract method, then provide the logic via a lambda.
+
+  ┌─ Example ─────────────────────────────────────────────────────────────┐
+  │                                                                        │
+  │   @FunctionalInterface                                                 │
+  │   interface Discount {                                                 │
+  │       double apply(double price);   // user-defined abstract method   │
+  │   }                                                                    │
+  │                                                                        │
+  │   Discount tenPercent = price -> price * 0.90;                         │
+  │   Discount flat50     = price -> price - 50;                           │
+  │                                                                        │
+  │   System.out.println(tenPercent.apply(200));  // → 180.0              │
+  │   System.out.println(flat50.apply(200));      // → 150.0              │
+  │                                                                        │
+  └────────────────────────────────────────────────────────────────────────┘
+
+  ► You define the interface & name the method whatever you want.
+    The lambda provides the body at call time. No class needed.
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+
+  ╭──────────────────────────────────────────────────────────────────────────╮
+  │  Q 12  │  Do you know any Pre-Defined Functional Interfaces in Java?     │
+  ╰──────────────────────────────────────────────────────────────────────────╯
+
+  Java provides many in java.util.function package (introduced in Java 8):
+
+  ┌──────────────────────┬─────────────────────────┬───────────────────────────────────┐
+  │  Functional          │  Abstract Method         │  Example Lambda                   │
+  │  Interface           │                          │                                   │
+  ├──────────────────────┼─────────────────────────┼───────────────────────────────────┤
+  │  Predicate<T>        │  boolean test(T t)       │  s -> s.isEmpty()                 │
+  │  Function<T,R>       │  R apply(T t)            │  s -> s.length()                  │
+  │  Consumer<T>         │  void accept(T t)        │  s -> System.out.println(s)       │
+  │  Supplier<T>         │  T get()                 │  () -> new ArrayList<>()          │
+  │  BiFunction<T,U,R>   │  R apply(T t, U u)       │  (a, b) -> a + b                  │
+  │  UnaryOperator<T>    │  T apply(T t)            │  s -> s.toUpperCase()             │
+  │  BinaryOperator<T>   │  T apply(T a, T b)       │  (a, b) -> a + b                  │
+  │  Runnable            │  void run()              │  () -> doWork()                   │
+  │  Callable<V>         │  V call()                │  () -> fetchData()                │
+  │  Comparator<T>       │  int compare(T a, T b)   │  (a, b) -> a - b                  │
+  └──────────────────────┴─────────────────────────┴───────────────────────────────────┘
+
+  ╔══════════════════════════════════════════════════════════════════════════╗
+  ║  💡 TIP:  The 4 core ones cover almost every use case:                  ║
+  ║                                                                          ║
+  ║   Predicate  →  test / filter something                                  ║
+  ║   Function   →  transform / convert something                            ║
+  ║   Consumer   →  use / consume something (no return)                      ║
+  ║   Supplier   →  produce / supply something (no input)                    ║
+  ║                                                                          ║
+  ║   Everything else in java.util.function is a specialization of these.   ║
+  ╚══════════════════════════════════════════════════════════════════════════╝
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  ┌──────────────────────────────────────────────────────────────────────┐
+  │                    Q U I C K  S U M M A R Y                          │
+  ├──────────────────────────────────────────────────────────────────────┤
+  │                                                                      │
+  │  FI        →  Interface with exactly 1 abstract method              │
+  │  Lambda    →  Short anonymous function assigned to a FI             │
+  │  FI + LE   →  Together they enable functional programming in Java   │
+  │  Built-in  →  Predicate, Function, Consumer, Supplier (+ more)      │
+  │  Custom    →  @FunctionalInterface on your own interface            │
+  │                                                                      │
+  └──────────────────────────────────────────────────────────────────────┘
