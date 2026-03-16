@@ -1,0 +1,285 @@
+JAVA COLLECTIONS FRAMEWORK – PRACTICAL GUIDE (CORE JAVA 21)
+
+Author: Practice Notes Purpose: Quick revision + GitHub / interview
+preparation Streams: NOT used in examples
+
+1. INTRODUCTION
+
+The Java Collections Framework (JCF) provides a set of classes and
+interfaces to store, manage, and manipulate groups of objects
+efficiently.
+
+It is part of the java.util package and contains commonly used data
+structures such as:
+
+List Set Queue Map
+
+2. COLLECTIONS HIERARCHY
+
+Iterable | Collection (Interface) | |—- List | |—- ArrayList | |—-
+LinkedList | |—- Vector | |—- Set | |—- HashSet | |—- TreeSet | |—-
+Queue |—- PriorityQueue
+
+Map (Separate Interface) |—- HashMap |—- TreeMap
+
+3. ARRAYLIST
+
+Description Dynamic array implementation of List.
+
+Characteristics - Maintains insertion order - Allows duplicates - Fast
+random access
+
+Real Life Example Shopping cart items in an e‑commerce application.
+
+Example Code
+
+import java.util.ArrayList;
+
+public class ArrayListExample {
+
+    public static void main(String[] args) {
+
+        ArrayList<String> cart = new ArrayList<>();
+
+        cart.add("Laptop");
+        cart.add("Mouse");
+        cart.add("Keyboard");
+        cart.add("Mouse");
+
+        for(String item : cart){
+            System.out.println(item);
+        }
+    }
+
+}
+
+4. LINKEDLIST
+
+Description Doubly linked list implementation.
+
+Characteristics - Efficient insertion and deletion
+
+Real Life Example Music playlist where songs can be added or removed
+easily.
+
+Example Code
+
+import java.util.LinkedList;
+
+public class LinkedListExample {
+
+    public static void main(String[] args) {
+
+        LinkedList<String> playlist = new LinkedList<>();
+
+        playlist.add("Song A");
+        playlist.add("Song B");
+        playlist.addFirst("Intro Song");
+        playlist.addLast("Ending Song");
+
+        for(String song : playlist){
+            System.out.println(song);
+        }
+    }
+
+}
+
+5. HASHSET
+
+Description Set implementation using hashing.
+
+Characteristics - Stores unique elements - No guaranteed order
+
+Real Life Example Unique user email storage.
+
+Example Code
+
+import java.util.HashSet;
+
+public class HashSetExample {
+
+    public static void main(String[] args) {
+
+        HashSet<String> emails = new HashSet<>();
+
+        emails.add("user1@gmail.com");
+        emails.add("user2@gmail.com");
+        emails.add("user1@gmail.com");
+
+        for(String email : emails){
+            System.out.println(email);
+        }
+    }
+
+}
+
+6. TREESET
+
+Description Sorted Set implementation.
+
+Characteristics - Automatically sorts elements - No duplicates
+
+Real Life Example Leaderboard ranking system.
+
+Example Code
+
+import java.util.TreeSet;
+
+public class TreeSetExample {
+
+    public static void main(String[] args) {
+
+        TreeSet<Integer> scores = new TreeSet<>();
+
+        scores.add(90);
+        scores.add(70);
+        scores.add(85);
+        scores.add(100);
+
+        for(Integer score : scores){
+            System.out.println(score);
+        }
+    }
+
+}
+
+7. PRIORITYQUEUE
+
+Description Queue that processes elements based on priority.
+
+Characteristics - Smallest element processed first by default.
+
+Real Life Example Hospital emergency patient queue.
+
+Example Code
+
+import java.util.PriorityQueue;
+
+public class PriorityQueueExample {
+
+    public static void main(String[] args) {
+
+        PriorityQueue<Integer> patients = new PriorityQueue<>();
+
+        patients.add(3);
+        patients.add(1);
+        patients.add(2);
+
+        while(!patients.isEmpty()){
+            System.out.println("Treat patient priority: " + patients.poll());
+        }
+    }
+
+}
+
+8. HASHMAP
+
+Description Stores key-value pairs.
+
+Characteristics - Keys must be unique - Fast lookup using hashing
+
+Real Life Example Employee ID mapped to employee name.
+
+Example Code
+
+import java.util.HashMap;
+
+public class HashMapExample {
+
+    public static void main(String[] args) {
+
+        HashMap<Integer, String> employees = new HashMap<>();
+
+        employees.put(101, "Aditya");
+        employees.put(102, "Rahul");
+        employees.put(103, "Sneha");
+
+        for(Integer id : employees.keySet()){
+            System.out.println(id + " : " + employees.get(id));
+        }
+    }
+
+}
+
+9. COLLECTION COMPARISON TABLE
+
+ArrayList - Ordered - Allows duplicates - Fast random access
+
+LinkedList - Ordered - Allows duplicates - Faster insert/delete
+
+HashSet - No order - Unique elements
+
+TreeSet - Sorted - Unique elements
+
+HashMap - Key-value pairs - Unique keys - Very fast lookup
+
+10. WHEN TO USE WHICH COLLECTION
+
+ArrayList Use when fast element access is required.
+
+LinkedList Use when frequent insertion/deletion is needed.
+
+HashSet Use when only unique elements must be stored.
+
+TreeSet Use when elements must remain sorted.
+
+PriorityQueue Use when processing items based on priority.
+
+HashMap Use when storing key-value relationships.
+
+11. COMMON COLLECTION OPERATIONS
+
+Add element Remove element Update element Search element Check if
+element exists Get size Iterate elements Sort elements Reverse elements
+Clear collection Check if empty Convert to array
+
+12. INTERVIEW QUESTIONS
+
+Basic Questions
+
+1.  What is the Java Collections Framework?
+2.  What is the difference between Collection and Collections?
+3.  What is the difference between List and Set?
+4.  What is the difference between ArrayList and LinkedList?
+5.  What is the difference between HashSet and TreeSet?
+6.  What is the difference between HashMap and Hashtable?
+7.  Why does HashSet not allow duplicates?
+8.  What happens when duplicate keys are inserted in HashMap?
+9.  Why is Map not part of Collection?
+10. What is the difference between Iterator and ListIterator?
+
+Intermediate Questions
+
+1.  How does HashMap work internally?
+2.  What is hashing?
+3.  What is load factor in HashMap?
+4.  What is collision in HashMap?
+5.  What is the difference between fail-fast and fail-safe iterator?
+6.  What is Comparable vs Comparator?
+7.  How does TreeSet maintain sorting?
+8.  What is the difference between ArrayList and Vector?
+9.  Why is ArrayList faster than LinkedList for reading?
+10. Can we store null values in HashMap?
+
+Advanced Questions
+
+1.  Explain the internal working of HashMap.
+2.  What happens when HashMap exceeds load factor?
+3.  What is rehashing?
+4.  What is a Red-Black Tree?
+5.  Why was HashMap improved in Java 8?
+6.  What is ConcurrentHashMap?
+7.  Difference between synchronized collection and concurrent
+    collection?
+8.  Why is HashMap not thread-safe?
+9.  What is the time complexity of HashMap operations?
+10. How does TreeMap maintain order?
+11. KEY TAKEAWAYS
+
+Collection is the root interface for List, Set, and Queue.
+
+Map is a separate interface but part of the Collections Framework.
+
+Most commonly used collections in real applications:
+
+ArrayList HashSet HashMap

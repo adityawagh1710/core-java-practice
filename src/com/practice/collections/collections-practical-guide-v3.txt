@@ -1,0 +1,1113 @@
+         ┌────────────────────────────────────────────────────────────┐
+         │   Package    :  java.util                                  │
+         │   Topics     :  List · Set · Map · Queue · Deque           │
+         │   Sections   :  10 Collection Types + Interview Q&A        │
+         │   Style      :  Practical examples without Stream API      │
+         └────────────────────────────────────────────────────────────┘
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+
+  ┌─────────────────────────────────────────────────────────────────────────────┐
+  │              COLLECTION HIERARCHY  —  Overview                              │
+  └─────────────────────────────────────────────────────────────────────────────┘
+
+                             Iterable
+                                │
+                           Collection
+                    ┌───────────┼───────────┐
+                   List        Set         Queue
+                ┌───┴───┐   ┌──┴──┐      ┌──┴──┐
+           ArrayList  LinkedList  │   PriorityQueue ArrayDeque
+           Vector     Stack    HashSet
+                             LinkedHashSet
+                             TreeSet
+
+            Map  (separate hierarchy — does NOT extend Collection)
+            ├── HashMap
+            ├── LinkedHashMap
+            └── TreeMap
+
+  ► Map is NOT part of Collection but IS part of the Collections Framework.
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+
+  ╭─────────────────────────────────────────────────────────────────────────────╮
+  │  01  │  ArrayList                                   [ java.util ]           │
+  ╰─────────────────────────────────────────────────────────────────────────────╯
+
+  ▸ Interface   : List
+  ▸ Backed by   : Dynamic array (Object[])
+  ▸ Order       : Insertion order maintained
+  ▸ Duplicates  : Allowed
+  ▸ Null        : Allowed
+  ▸ Thread-safe : No  (use Collections.synchronizedList() if needed)
+  ▸ get(i)      : O(1)   add at end: O(1) amortized   insert middle: O(n)
+
+  ┌─ Create, Add, Access ─────────────────────────────────────────────────────┐
+  │                                                                            │
+  │   List<String> fruits = new ArrayList<>();                                 │
+  │   fruits.add("Apple");                                                     │
+  │   fruits.add("Banana");                                                    │
+  │   fruits.add("Mango");                                                     │
+  │   fruits.add(1, "Grapes");        // insert at index 1                    │
+  │                                                                            │
+  │   System.out.println(fruits.get(0));          // Apple                    │
+  │   System.out.println(fruits.size());          // 4                        │
+  │   System.out.println(fruits.contains("Mango")); // true                   │
+  │   System.out.println(fruits.indexOf("Banana")); // 2                      │
+  │                                                                            │
+  └────────────────────────────────────────────────────────────────────────────┘
+  ┌─ Remove, Update, Iterate ─────────────────────────────────────────────────┐
+  │                                                                            │
+  │   fruits.remove("Banana");        // remove by value                      │
+  │   fruits.remove(0);               // remove by index                      │
+  │   fruits.set(0, "Pineapple");     // update at index 0                    │
+  │                                                                            │
+  │   // for-each loop                                                         │
+  │   for (String f : fruits) {                                                │
+  │       System.out.println(f);                                               │
+  │   }                                                                        │
+  │                                                                            │
+  │   // traditional for loop (index access)                                   │
+  │   for (int i = 0; i < fruits.size(); i++) {                               │
+  │       System.out.println(i + ": " + fruits.get(i));                       │
+  │   }                                                                        │
+  │                                                                            │
+  │   // iterator                                                               │
+  │   Iterator<String> it = fruits.iterator();                                 │
+  │   while (it.hasNext()) {                                                   │
+  │       System.out.println(it.next());                                       │
+  │   }                                                                        │
+  │                                                                            │
+  └────────────────────────────────────────────────────────────────────────────┘
+  ┌─ Sort, Reverse, SubList ──────────────────────────────────────────────────┐
+  │                                                                            │
+  │   List<Integer> nums = new ArrayList<>(Arrays.asList(5,2,8,1,9));         │
+  │                                                                            │
+  │   Collections.sort(nums);               // [1, 2, 5, 8, 9]               │
+  │   Collections.sort(nums, (a,b)->b-a);   // descending [9,8,5,2,1]        │
+  │   Collections.reverse(nums);                                               │
+  │   Collections.shuffle(nums);                                               │
+  │   int max = Collections.max(nums);                                         │
+  │   int min = Collections.min(nums);                                         │
+  │                                                                            │
+  │   List<Integer> sub = nums.subList(1, 3);  // index 1 to 2 (exclusive 3) │
+  │                                                                            │
+  └────────────────────────────────────────────────────────────────────────────┘
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+
+  ╭─────────────────────────────────────────────────────────────────────────────╮
+  │  02  │  LinkedList                                  [ java.util ]           │
+  ╰─────────────────────────────────────────────────────────────────────────────╯
+
+  ▸ Interface   : List + Deque
+  ▸ Backed by   : Doubly linked list
+  ▸ Order       : Insertion order maintained
+  ▸ Duplicates  : Allowed
+  ▸ Null        : Allowed
+  ▸ Thread-safe : No
+  ▸ get(i)      : O(n)   add at head/tail: O(1)   insert middle: O(1)*
+
+  ┌─ As a List ────────────────────────────────────────────────────────────────┐
+  │                                                                            │
+  │   LinkedList<String> ll = new LinkedList<>();                              │
+  │   ll.add("Alice");                                                         │
+  │   ll.add("Bob");                                                           │
+  │   ll.add("Charlie");                                                       │
+  │                                                                            │
+  │   System.out.println(ll.get(1));    // Bob                                │
+  │   ll.remove(1);                     // removes Bob                        │
+  │   ll.set(0, "Alex");                // update index 0                     │
+  │                                                                            │
+  └────────────────────────────────────────────────────────────────────────────┘
+  ┌─ As a Queue (FIFO — First In First Out) ──────────────────────────────────┐
+  │                                                                            │
+  │   LinkedList<String> queue = new LinkedList<>();                           │
+  │   queue.offer("Task1");    // add to tail                                  │
+  │   queue.offer("Task2");                                                    │
+  │   queue.offer("Task3");                                                    │
+  │                                                                            │
+  │   System.out.println(queue.peek());   // Task1  (head, no remove)         │
+  │   System.out.println(queue.poll());   // Task1  (removes head)            │
+  │   System.out.println(queue.poll());   // Task2                            │
+  │                                                                            │
+  └────────────────────────────────────────────────────────────────────────────┘
+  ┌─ As a Stack (LIFO — Last In First Out) ───────────────────────────────────┐
+  │                                                                            │
+  │   LinkedList<String> stack = new LinkedList<>();                           │
+  │   stack.push("Page1");    // addFirst                                      │
+  │   stack.push("Page2");                                                     │
+  │   stack.push("Page3");                                                     │
+  │                                                                            │
+  │   System.out.println(stack.peek());   // Page3  (top, no remove)          │
+  │   System.out.println(stack.pop());    // Page3  (removes top)             │
+  │   System.out.println(stack.pop());    // Page2                            │
+  │                                                                            │
+  └────────────────────────────────────────────────────────────────────────────┘
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+
+  ╭─────────────────────────────────────────────────────────────────────────────╮
+  │  03  │  HashSet                                     [ java.util ]           │
+  ╰─────────────────────────────────────────────────────────────────────────────╯
+
+  ▸ Interface   : Set
+  ▸ Backed by   : HashMap internally
+  ▸ Order       : No guaranteed order
+  ▸ Duplicates  : NOT allowed
+  ▸ Null        : One null allowed
+  ▸ Thread-safe : No
+  ▸ add/remove/contains: O(1) average
+
+  ┌─ Basic Operations ────────────────────────────────────────────────────────┐
+  │                                                                            │
+  │   Set<String> cities = new HashSet<>();                                    │
+  │   cities.add("Delhi");                                                     │
+  │   cities.add("Mumbai");                                                    │
+  │   cities.add("Delhi");    // duplicate — silently ignored                  │
+  │   cities.add("Chennai");                                                   │
+  │                                                                            │
+  │   System.out.println(cities.size());             // 3                     │
+  │   System.out.println(cities.contains("Mumbai")); // true                  │
+  │   cities.remove("Chennai");                                                │
+  │                                                                            │
+  │   for (String c : cities) {                                                │
+  │       System.out.println(c);   // order NOT guaranteed                    │
+  │   }                                                                        │
+  │                                                                            │
+  └────────────────────────────────────────────────────────────────────────────┘
+  ┌─ Set Operations — Union, Intersection, Difference ────────────────────────┐
+  │                                                                            │
+  │   Set<Integer> a = new HashSet<>(Arrays.asList(1,2,3,4));                 │
+  │   Set<Integer> b = new HashSet<>(Arrays.asList(3,4,5,6));                 │
+  │                                                                            │
+  │   // Union  →  all elements from both                                      │
+  │   Set<Integer> union = new HashSet<>(a);                                   │
+  │   union.addAll(b);                    // [1,2,3,4,5,6]                    │
+  │                                                                            │
+  │   // Intersection  →  common elements only                                 │
+  │   Set<Integer> inter = new HashSet<>(a);                                   │
+  │   inter.retainAll(b);                 // [3,4]                             │
+  │                                                                            │
+  │   // Difference  →  in a but not in b                                      │
+  │   Set<Integer> diff = new HashSet<>(a);                                    │
+  │   diff.removeAll(b);                  // [1,2]                             │
+  │                                                                            │
+  └────────────────────────────────────────────────────────────────────────────┘
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+
+  ╭─────────────────────────────────────────────────────────────────────────────╮
+  │  04  │  LinkedHashSet                               [ java.util ]           │
+  ╰─────────────────────────────────────────────────────────────────────────────╯
+
+  ▸ Interface   : Set
+  ▸ Backed by   : HashMap + doubly linked list
+  ▸ Order       : Insertion order preserved
+  ▸ Duplicates  : NOT allowed
+  ▸ Null        : One null allowed
+  ▸ Thread-safe : No
+  ▸ add/remove/contains: O(1) average
+
+  ┌─ Insertion Order Preserved ────────────────────────────────────────────────┐
+  │                                                                            │
+  │   Set<String> lhs = new LinkedHashSet<>();                                 │
+  │   lhs.add("Zebra");                                                        │
+  │   lhs.add("Apple");                                                        │
+  │   lhs.add("Mango");                                                        │
+  │   lhs.add("Apple");    // duplicate — ignored                              │
+  │                                                                            │
+  │   for (String s : lhs) {                                                   │
+  │       System.out.println(s);    // Zebra → Apple → Mango  (always)        │
+  │   }                                                                        │
+  │                                                                            │
+  └────────────────────────────────────────────────────────────────────────────┘
+  ┌─ Practical — Remove Duplicates Preserving Order ──────────────────────────┐
+  │                                                                            │
+  │   List<String> raw = Arrays.asList("a","b","a","c","b","d");               │
+  │                                                                            │
+  │   // Remove duplicates, keep original order — no stream needed             │
+  │   Set<String> unique = new LinkedHashSet<>(raw);                           │
+  │   System.out.println(unique);   // [a, b, c, d]                           │
+  │                                                                            │
+  │   // Convert back to List if needed                                        │
+  │   List<String> deduped = new ArrayList<>(unique);                          │
+  │                                                                            │
+  └────────────────────────────────────────────────────────────────────────────┘
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+
+  ╭─────────────────────────────────────────────────────────────────────────────╮
+  │  05  │  TreeSet                                     [ java.util ]           │
+  ╰─────────────────────────────────────────────────────────────────────────────╯
+
+  ▸ Interface   : NavigableSet → SortedSet → Set
+  ▸ Backed by   : Red-Black Tree (TreeMap internally)
+  ▸ Order       : Always sorted (natural or Comparator)
+  ▸ Duplicates  : NOT allowed
+  ▸ Null        : NOT allowed
+  ▸ Thread-safe : No
+  ▸ add/remove/contains: O(log n)
+
+  ┌─ Natural Sort Order ───────────────────────────────────────────────────────┐
+  │                                                                            │
+  │   TreeSet<Integer> ts = new TreeSet<>();                                   │
+  │   ts.add(50); ts.add(10); ts.add(30); ts.add(20); ts.add(10); // dup ignored │
+  │                                                                            │
+  │   System.out.println(ts);             // [10, 20, 30, 50]  always sorted  │
+  │   System.out.println(ts.first());     // 10                               │
+  │   System.out.println(ts.last());      // 50                               │
+  │   System.out.println(ts.higher(20));  // 30  (next above 20)              │
+  │   System.out.println(ts.lower(30));   // 20  (next below 30)              │
+  │   System.out.println(ts.floor(25));   // 20  (≤ 25)                       │
+  │   System.out.println(ts.ceiling(25)); // 30  (≥ 25)                       │
+  │                                                                            │
+  └────────────────────────────────────────────────────────────────────────────┘
+  ┌─ Range Views & Custom Sort ────────────────────────────────────────────────┐
+  │                                                                            │
+  │   // Range queries — no stream needed                                       │
+  │   NavigableSet<Integer> range = ts.subSet(10, true, 40, false); // [10,20,30] │
+  │   NavigableSet<Integer> head  = ts.headSet(30);   // [10, 20]             │
+  │   NavigableSet<Integer> tail  = ts.tailSet(30);   // [30, 50]             │
+  │                                                                            │
+  │   // Custom order — sort strings by length, then alphabetically            │
+  │   TreeSet<String> byLen = new TreeSet<>((a,b) ->                          │
+  │       a.length() != b.length() ? a.length()-b.length() : a.compareTo(b)); │
+  │   byLen.add("Banana"); byLen.add("Fig"); byLen.add("Apple");               │
+  │   System.out.println(byLen);   // [Fig, Apple, Banana]                    │
+  │                                                                            │
+  └────────────────────────────────────────────────────────────────────────────┘
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+
+  ╭─────────────────────────────────────────────────────────────────────────────╮
+  │  06  │  HashMap                                     [ java.util ]           │
+  ╰─────────────────────────────────────────────────────────────────────────────╯
+
+  ▸ Interface   : Map
+  ▸ Backed by   : Array of linked lists / tree bins (Java 8+)
+  ▸ Order       : No guaranteed order
+  ▸ Keys        : Unique. One null key allowed
+  ▸ Values      : Duplicates allowed. Null values allowed
+  ▸ Thread-safe : No  (use ConcurrentHashMap for thread-safety)
+  ▸ get/put     : O(1) average
+
+  ┌─ Basic Operations ────────────────────────────────────────────────────────┐
+  │                                                                            │
+  │   Map<String, Integer> scores = new HashMap<>();                           │
+  │   scores.put("Alice", 90);                                                 │
+  │   scores.put("Bob",   75);                                                 │
+  │   scores.put("Alice", 95);    // overwrites Alice → 95                    │
+  │                                                                            │
+  │   System.out.println(scores.get("Alice"));            // 95               │
+  │   System.out.println(scores.getOrDefault("Eve", 0));  // 0  (key absent)  │
+  │   System.out.println(scores.containsKey("Bob"));      // true             │
+  │   System.out.println(scores.containsValue(75));       // true             │
+  │   scores.remove("Bob");                                                    │
+  │                                                                            │
+  └────────────────────────────────────────────────────────────────────────────┘
+  ┌─ Iterate a Map ────────────────────────────────────────────────────────────┐
+  │                                                                            │
+  │   // entrySet — most common way                                             │
+  │   for (Map.Entry<String,Integer> e : scores.entrySet()) {                  │
+  │       System.out.println(e.getKey() + " → " + e.getValue());               │
+  │   }                                                                        │
+  │                                                                            │
+  │   // keySet only                                                            │
+  │   for (String key : scores.keySet()) {                                     │
+  │       System.out.println(key);                                             │
+  │   }                                                                        │
+  │                                                                            │
+  │   // values only                                                            │
+  │   for (Integer val : scores.values()) {                                    │
+  │       System.out.println(val);                                             │
+  │   }                                                                        │
+  │                                                                            │
+  │   // forEach with BiConsumer lambda (Java 8+)                              │
+  │   scores.forEach((k, v) -> System.out.println(k + ": " + v));             │
+  │                                                                            │
+  └────────────────────────────────────────────────────────────────────────────┘
+  ┌─ Useful Utility Methods (Java 8+) ────────────────────────────────────────┐
+  │                                                                            │
+  │   scores.putIfAbsent("Charlie", 80);   // only adds if key absent          │
+  │   scores.replace("Alice", 99);         // only replaces if key exists      │
+  │                                                                            │
+  │   // Word frequency counter — merge() pattern                              │
+  │   Map<String,Integer> freq = new HashMap<>();                              │
+  │   String[] words = {"cat","dog","cat","bird","dog","cat"};                 │
+  │                                                                            │
+  │   for (String w : words) {                                                 │
+  │       freq.merge(w, 1, Integer::sum);   // add 1 or sum if exists         │
+  │   }                                                                        │
+  │   System.out.println(freq);   // {cat=3, dog=2, bird=1}                   │
+  │                                                                            │
+  └────────────────────────────────────────────────────────────────────────────┘
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+
+  ╭─────────────────────────────────────────────────────────────────────────────╮
+  │  07  │  LinkedHashMap                               [ java.util ]           │
+  ╰─────────────────────────────────────────────────────────────────────────────╯
+
+  ▸ Interface   : Map
+  ▸ Backed by   : HashMap + doubly linked list
+  ▸ Order       : Insertion order (or access order)
+  ▸ Keys        : Unique. One null key allowed
+  ▸ Thread-safe : No
+  ▸ get/put     : O(1) average
+
+  ┌─ Insertion Order Preserved ────────────────────────────────────────────────┐
+  │                                                                            │
+  │   Map<String,Integer> lhm = new LinkedHashMap<>();                         │
+  │   lhm.put("Zebra", 1);                                                     │
+  │   lhm.put("Apple", 2);                                                     │
+  │   lhm.put("Mango", 3);                                                     │
+  │                                                                            │
+  │   for (String k : lhm.keySet()) {                                          │
+  │       System.out.println(k);   // Zebra, Apple, Mango  ← order guaranteed │
+  │   }                                                                        │
+  │                                                                            │
+  └────────────────────────────────────────────────────────────────────────────┘
+  ┌─ LRU Cache — Access Order Mode ───────────────────────────────────────────┐
+  │                                                                            │
+  │   int CAPACITY = 3;                                                        │
+  │                                                                            │
+  │   // accessOrder=true → most-recently-used moves to tail                   │
+  │   Map<Integer,String> lruCache = new LinkedHashMap<>(CAPACITY, 0.75f, true) { │
+  │       protected boolean removeEldestEntry(Map.Entry<Integer,String> e) {   │
+  │           return size() > CAPACITY;   // evict least-recently-used         │
+  │       }                                                                    │
+  │   };                                                                       │
+  │                                                                            │
+  │   lruCache.put(1, "A");                                                    │
+  │   lruCache.put(2, "B");                                                    │
+  │   lruCache.put(3, "C");                                                    │
+  │   lruCache.get(1);          // access 1 → moves to tail                   │
+  │   lruCache.put(4, "D");     // evicts 2 (least recently used)             │
+  │   System.out.println(lruCache.keySet());  // [3, 1, 4]                    │
+  │                                                                            │
+  └────────────────────────────────────────────────────────────────────────────┘
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+
+  ╭─────────────────────────────────────────────────────────────────────────────╮
+  │  08  │  TreeMap                                     [ java.util ]           │
+  ╰─────────────────────────────────────────────────────────────────────────────╯
+
+  ▸ Interface   : NavigableMap → SortedMap → Map
+  ▸ Backed by   : Red-Black Tree
+  ▸ Order       : Keys always sorted (natural or Comparator)
+  ▸ Keys        : Unique. Null NOT allowed
+  ▸ Thread-safe : No
+  ▸ get/put     : O(log n)
+
+  ┌─ Always Sorted by Key ─────────────────────────────────────────────────────┐
+  │                                                                            │
+  │   TreeMap<String,Integer> tm = new TreeMap<>();                            │
+  │   tm.put("Mango",  30);                                                    │
+  │   tm.put("Apple",  50);                                                    │
+  │   tm.put("Banana", 20);                                                    │
+  │   tm.put("Cherry", 10);                                                    │
+  │                                                                            │
+  │   System.out.println(tm);              // {Apple=50,Banana=20,Cherry=10,Mango=30} │
+  │   System.out.println(tm.firstKey());   // Apple                           │
+  │   System.out.println(tm.lastKey());    // Mango                           │
+  │   System.out.println(tm.floorKey("Cantaloupe"));    // Banana             │
+  │   System.out.println(tm.ceilingKey("Cantaloupe"));  // Cherry             │
+  │                                                                            │
+  └────────────────────────────────────────────────────────────────────────────┘
+  ┌─ Range Sub-Map ────────────────────────────────────────────────────────────┐
+  │                                                                            │
+  │   SortedMap<String,Integer> sub  = tm.subMap("Apple","Mango");  // A,B,C  │
+  │   SortedMap<String,Integer> head = tm.headMap("Cherry");         // A, B   │
+  │   SortedMap<String,Integer> tail = tm.tailMap("Cherry");         // C, M   │
+  │                                                                            │
+  │   for (Map.Entry<String,Integer> e : sub.entrySet()) {                     │
+  │       System.out.println(e.getKey() + " = " + e.getValue());               │
+  │   }                                                                        │
+  │                                                                            │
+  └────────────────────────────────────────────────────────────────────────────┘
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+
+  ╭─────────────────────────────────────────────────────────────────────────────╮
+  │  09  │  PriorityQueue                               [ java.util ]           │
+  ╰─────────────────────────────────────────────────────────────────────────────╯
+
+  ▸ Interface   : Queue
+  ▸ Backed by   : Min-heap (binary heap array)
+  ▸ Order       : Priority order — smallest polled first (natural order)
+  ▸ Duplicates  : Allowed
+  ▸ Null        : NOT allowed
+  ▸ Thread-safe : No
+  ▸ offer/poll  : O(log n)   peek: O(1)
+
+  ┌─ Min-Heap (Default Natural Order) ────────────────────────────────────────┐
+  │                                                                            │
+  │   PriorityQueue<Integer> pq = new PriorityQueue<>();                       │
+  │   pq.offer(40); pq.offer(10); pq.offer(30); pq.offer(20);                 │
+  │                                                                            │
+  │   System.out.println(pq.peek());    // 10  (min, no remove)               │
+  │   System.out.println(pq.poll());    // 10  (removes min)                  │
+  │   System.out.println(pq.poll());    // 20                                 │
+  │   System.out.println(pq.poll());    // 30                                 │
+  │                                                                            │
+  └────────────────────────────────────────────────────────────────────────────┘
+  ┌─ Max-Heap (Reverse Order) ─────────────────────────────────────────────────┐
+  │                                                                            │
+  │   PriorityQueue<Integer> maxPQ = new PriorityQueue<>(Collections.reverseOrder()); │
+  │   maxPQ.offer(40); maxPQ.offer(10); maxPQ.offer(30);                       │
+  │                                                                            │
+  │   System.out.println(maxPQ.poll());   // 40  (max first)                  │
+  │   System.out.println(maxPQ.poll());   // 30                               │
+  │                                                                            │
+  └────────────────────────────────────────────────────────────────────────────┘
+  ┌─ Custom Priority — Task Scheduling ───────────────────────────────────────┐
+  │                                                                            │
+  │   class Task {                                                             │
+  │       String name; int priority;                                           │
+  │       Task(String n, int p) { name=n; priority=p; }                        │
+  │   }                                                                        │
+  │                                                                            │
+  │   PriorityQueue<Task> tasks = new PriorityQueue<>(                         │
+  │       (a, b) -> a.priority - b.priority);   // lower num = higher priority │
+  │                                                                            │
+  │   tasks.offer(new Task("Low",      3));                                    │
+  │   tasks.offer(new Task("Critical", 1));                                    │
+  │   tasks.offer(new Task("Medium",   2));                                    │
+  │                                                                            │
+  │   while (!tasks.isEmpty()) {                                               │
+  │       Task t = tasks.poll();                                               │
+  │       System.out.println(t.name);   // Critical → Medium → Low            │
+  │   }                                                                        │
+  │                                                                            │
+  └────────────────────────────────────────────────────────────────────────────┘
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+
+  ╭─────────────────────────────────────────────────────────────────────────────╮
+  │  10  │  ArrayDeque                                  [ java.util ]           │
+  ╰─────────────────────────────────────────────────────────────────────────────╯
+
+  ▸ Interface   : Deque → Queue
+  ▸ Backed by   : Resizable circular array
+  ▸ Order       : Both ends accessible
+  ▸ Duplicates  : Allowed
+  ▸ Null        : NOT allowed
+  ▸ Thread-safe : No
+  ▸ push/pop/offer/poll: O(1)
+
+  ► Preferred over Stack class and LinkedList for stack/queue operations.
+
+  ┌─ As a Stack (LIFO) ────────────────────────────────────────────────────────┐
+  │                                                                            │
+  │   Deque<String> stack = new ArrayDeque<>();                                │
+  │   stack.push("First");    // addFirst                                      │
+  │   stack.push("Second");                                                    │
+  │   stack.push("Third");                                                     │
+  │                                                                            │
+  │   System.out.println(stack.peek());    // Third  (top)                    │
+  │   System.out.println(stack.pop());     // Third  (removes top)            │
+  │   System.out.println(stack.pop());     // Second                          │
+  │                                                                            │
+  └────────────────────────────────────────────────────────────────────────────┘
+  ┌─ As a Queue (FIFO) ────────────────────────────────────────────────────────┐
+  │                                                                            │
+  │   Deque<String> queue = new ArrayDeque<>();                                │
+  │   queue.offer("Job1");    // addLast                                       │
+  │   queue.offer("Job2");                                                     │
+  │   queue.offer("Job3");                                                     │
+  │                                                                            │
+  │   System.out.println(queue.poll());    // Job1  (removes head)            │
+  │   System.out.println(queue.poll());    // Job2                            │
+  │                                                                            │
+  └────────────────────────────────────────────────────────────────────────────┘
+  ┌─ Deque-Specific — Add/Remove from Both Ends ──────────────────────────────┐
+  │                                                                            │
+  │   Deque<Integer> dq = new ArrayDeque<>();                                  │
+  │   dq.addFirst(10);                                                         │
+  │   dq.addLast(20);                                                          │
+  │   dq.addFirst(5);                                                          │
+  │   dq.addLast(30);                    // [5, 10, 20, 30]                   │
+  │                                                                            │
+  │   System.out.println(dq.peekFirst()); // 5                                │
+  │   System.out.println(dq.peekLast());  // 30                               │
+  │   dq.pollFirst();   // removes 5                                           │
+  │   dq.pollLast();    // removes 30     → [10, 20]                          │
+  │                                                                            │
+  └────────────────────────────────────────────────────────────────────────────┘
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+
+  ┌─────────────────────────────────────────────────────────────────────────────┐
+  │                QUICK COMPARISON TABLES                                      │
+  └─────────────────────────────────────────────────────────────────────────────┘
+
+  ── List Implementations ──────────────────────────────────────────────────────
+
+  ┌──────────────────┬─────────────────┬─────────────────┬─────────────────────┐
+  │  Feature         │  ArrayList      │  LinkedList     │  Vector             │
+  ├──────────────────┼─────────────────┼─────────────────┼─────────────────────┤
+  │  get(i)          │  O(1)  fast     │  O(n)  slow     │  O(1)  fast         │
+  │  add at end      │  O(1) amortized │  O(1)           │  O(1) amortized     │
+  │  insert middle   │  O(n)           │  O(1)*          │  O(n)               │
+  │  Memory          │  Less           │  More (nodes)   │  Less               │
+  │  Thread-safe     │  No             │  No             │  Yes (synchronized) │
+  │  Use when        │  Default choice │  Stack or Queue │  Legacy code only   │
+  └──────────────────┴─────────────────┴─────────────────┴─────────────────────┘
+
+  ── Set Implementations ───────────────────────────────────────────────────────
+
+  ┌──────────────────┬─────────────────┬──────────────────┬────────────────────┐
+  │  Feature         │  HashSet        │  LinkedHashSet   │  TreeSet           │
+  ├──────────────────┼─────────────────┼──────────────────┼────────────────────┤
+  │  Order           │  None           │  Insertion order │  Sorted (natural)  │
+  │  add/contains    │  O(1)           │  O(1)            │  O(log n)          │
+  │  Null allowed    │  One null       │  One null        │  No                │
+  │  Sorted output   │  No             │  No              │  Yes               │
+  │  Use when        │  Fast uniqueness│  Order matters   │  Sorted set needed │
+  └──────────────────┴─────────────────┴──────────────────┴────────────────────┘
+
+  ── Map Implementations ───────────────────────────────────────────────────────
+
+  ┌──────────────────┬─────────────────┬──────────────────┬────────────────────┐
+  │  Feature         │  HashMap        │  LinkedHashMap   │  TreeMap           │
+  ├──────────────────┼─────────────────┼──────────────────┼────────────────────┤
+  │  Order           │  None           │  Insertion order │  Sorted by key     │
+  │  get/put         │  O(1)           │  O(1)            │  O(log n)          │
+  │  Null key        │  One null       │  One null        │  No                │
+  │  Use when        │  Default choice │  LRU / ordering  │  Range queries     │
+  └──────────────────┴─────────────────┴──────────────────┴────────────────────┘
+
+  ── Queue / Deque Implementations ────────────────────────────────────────────
+
+  ┌──────────────────┬─────────────────┬──────────────────┬────────────────────┐
+  │  Feature         │  PriorityQueue  │  ArrayDeque      │  LinkedList        │
+  ├──────────────────┼─────────────────┼──────────────────┼────────────────────┤
+  │  Order           │  Priority heap  │  FIFO / LIFO     │  FIFO / LIFO       │
+  │  poll()          │  O(log n)       │  O(1)            │  O(1)              │
+  │  Null allowed    │  No             │  No              │  Yes               │
+  │  Use when        │  Scheduling     │  Stack or Queue  │  Need null support │
+  └──────────────────┴─────────────────┴──────────────────┴────────────────────┘
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+
+  ╔══════════════════════════════════════════════════════════════════════════════╗
+  ║              INTERVIEW QUESTIONS — Java Collections                          ║
+  ╠══════════════════════════════════════════════════════════════════════════════╣
+  ║  Freshers  (★)   Mid-level  (★★)   Senior  (★★★)                          ║
+  ╚══════════════════════════════════════════════════════════════════════════════╝
+
+
+  ╭──────────────────────────────────────────────────────────────────────────────╮
+  │  SECTION A  │  Conceptual / Theory Questions                                 │
+  ╰──────────────────────────────────────────────────────────────────────────────╯
+
+  ┌─ Q1 ★ ───────────────────────────────────────────────────────────────────┐
+  │  What is the Java Collections Framework?                                  │
+  ├──────────────────────────────────────────────────────────────────────────┤
+  │  A unified architecture for storing and manipulating groups of objects.   │
+  │  It includes:                                                             │
+  │   ▸ Interfaces  : Collection, List, Set, Queue, Map                       │
+  │   ▸ Implementations : ArrayList, HashMap, TreeSet etc.                    │
+  │   ▸ Algorithms  : Collections.sort(), Collections.shuffle() etc.          │
+  └──────────────────────────────────────────────────────────────────────────┘
+
+  ┌─ Q2 ★ ───────────────────────────────────────────────────────────────────┐
+  │  What is the difference between Collection and Collections?               │
+  ├──────────────────────────────────────────────────────────────────────────┤
+  │  Collection  →  Interface (java.util.Collection)                          │
+  │                 Root interface for List, Set, Queue                       │
+  │  Collections →  Utility class (java.util.Collections)                    │
+  │                 Provides static methods: sort(), reverse(), shuffle()     │
+  └──────────────────────────────────────────────────────────────────────────┘
+
+  ┌─ Q3 ★ ───────────────────────────────────────────────────────────────────┐
+  │  Does Map extend Collection?                                              │
+  ├──────────────────────────────────────────────────────────────────────────┤
+  │  No. Map is a separate hierarchy. It does NOT extend Collection           │
+  │  because Map stores key-value pairs, not single elements.                 │
+  │  Both are part of the Collections Framework but Map is independent.       │
+  └──────────────────────────────────────────────────────────────────────────┘
+
+  ┌─ Q4 ★ ───────────────────────────────────────────────────────────────────┐
+  │  What is the difference between ArrayList and LinkedList?                 │
+  ├──────────────────────────────────────────────────────────────────────────┤
+  │  ArrayList:                                                               │
+  │   ▸ Backed by dynamic array                                               │
+  │   ▸ Fast random access  get(i) → O(1)                                     │
+  │   ▸ Slow insert/delete in middle → O(n)                                   │
+  │   ▸ Better for read-heavy operations                                       │
+  │  LinkedList:                                                               │
+  │   ▸ Backed by doubly linked list                                           │
+  │   ▸ Slow random access  get(i) → O(n)                                     │
+  │   ▸ Fast insert/delete at head/tail → O(1)                                │
+  │   ▸ Implements Deque — can act as stack or queue                          │
+  │   ▸ More memory (stores prev + next node references)                      │
+  └──────────────────────────────────────────────────────────────────────────┘
+
+  ┌─ Q5 ★ ───────────────────────────────────────────────────────────────────┐
+  │  What is the difference between HashSet, LinkedHashSet and TreeSet?       │
+  ├──────────────────────────────────────────────────────────────────────────┤
+  │  HashSet       →  No order.  Fastest. O(1) ops. Allows one null.          │
+  │  LinkedHashSet →  Insertion order maintained. O(1) ops. Allows one null.  │
+  │  TreeSet       →  Always sorted. O(log n) ops. NO null allowed.           │
+  └──────────────────────────────────────────────────────────────────────────┘
+
+  ┌─ Q6 ★ ───────────────────────────────────────────────────────────────────┐
+  │  What is the difference between HashMap, LinkedHashMap and TreeMap?       │
+  ├──────────────────────────────────────────────────────────────────────────┤
+  │  HashMap       →  No order. Fastest. O(1). One null key allowed.          │
+  │  LinkedHashMap →  Insertion order maintained. O(1). Null key allowed.     │
+  │  TreeMap       →  Keys always sorted. O(log n). NO null key allowed.      │
+  └──────────────────────────────────────────────────────────────────────────┘
+
+  ┌─ Q7 ★ ───────────────────────────────────────────────────────────────────┐
+  │  What is the difference between HashMap and Hashtable?                    │
+  ├──────────────────────────────────────────────────────────────────────────┤
+  │  ┌──────────────────┬────────────────────┬────────────────────┐           │
+  │  │  Feature         │  HashMap           │  Hashtable         │           │
+  │  ├──────────────────┼────────────────────┼────────────────────┤           │
+  │  │  Thread-safe     │  No                │  Yes (synchronized)│           │
+  │  │  Null key        │  One null allowed  │  NOT allowed       │           │
+  │  │  Performance     │  Faster            │  Slower            │           │
+  │  │  Introduced      │  Java 1.2          │  Java 1.0 (legacy) │           │
+  │  └──────────────────┴────────────────────┴────────────────────┘           │
+  │  ► Use ConcurrentHashMap instead of Hashtable in modern code.             │
+  └──────────────────────────────────────────────────────────────────────────┘
+
+  ┌─ Q8 ★★ ──────────────────────────────────────────────────────────────────┐
+  │  How does HashMap work internally?                                        │
+  ├──────────────────────────────────────────────────────────────────────────┤
+  │  1. HashMap uses an array of buckets (default size 16).                   │
+  │  2. When you put(key, value):                                             │
+  │      a. hashCode() is called on the key.                                  │
+  │      b. Hash is computed to find the bucket index.                        │
+  │      c. If bucket is empty → entry is placed directly.                    │
+  │      d. If collision → stored as a linked list in that bucket.            │
+  │  3. From Java 8: if a bucket's chain > 8 entries →                        │
+  │     linked list converts to a Red-Black Tree (O(log n) lookup).           │
+  │  4. Load factor (default 0.75): when 75% full → array doubles (rehash).   │
+  └──────────────────────────────────────────────────────────────────────────┘
+
+  ┌─ Q9 ★★ ──────────────────────────────────────────────────────────────────┐
+  │  What is the difference between fail-fast and fail-safe iterators?        │
+  ├──────────────────────────────────────────────────────────────────────────┤
+  │  Fail-fast:                                                               │
+  │   ▸ Throws ConcurrentModificationException if collection is modified      │
+  │     during iteration (outside of iterator's own remove() method).         │
+  │   ▸ Examples: ArrayList, HashMap, HashSet iterators                       │
+  │   ▸ Works on original collection                                          │
+  │                                                                           │
+  │  Fail-safe:                                                               │
+  │   ▸ Does NOT throw exception. Works on a clone of the collection.         │
+  │   ▸ May not reflect recent changes made during iteration.                 │
+  │   ▸ Examples: ConcurrentHashMap, CopyOnWriteArrayList iterators           │
+  └──────────────────────────────────────────────────────────────────────────┘
+
+  ┌─ Q10 ★★ ─────────────────────────────────────────────────────────────────┐
+  │  What is the difference between Iterator and ListIterator?                │
+  ├──────────────────────────────────────────────────────────────────────────┤
+  │  Iterator:                                                                │
+  │   ▸ Works on any Collection (List, Set, Queue)                            │
+  │   ▸ Traversal: forward only                                               │
+  │   ▸ Methods: hasNext(), next(), remove()                                  │
+  │                                                                           │
+  │  ListIterator:                                                            │
+  │   ▸ Works only on List (ArrayList, LinkedList)                            │
+  │   ▸ Traversal: forward AND backward                                       │
+  │   ▸ Methods: hasNext(), next(), hasPrevious(), previous(),                │
+  │              add(), set(), remove(), nextIndex(), previousIndex()         │
+  └──────────────────────────────────────────────────────────────────────────┘
+
+  ┌─ Q11 ★★ ─────────────────────────────────────────────────────────────────┐
+  │  Why should you use ArrayDeque instead of Stack class?                    │
+  ├──────────────────────────────────────────────────────────────────────────┤
+  │  ▸ Stack extends Vector, which is synchronized → slower.                  │
+  │  ▸ ArrayDeque is NOT synchronized → faster.                               │
+  │  ▸ ArrayDeque implements Deque → more flexible API.                       │
+  │  ▸ Java documentation itself recommends ArrayDeque over Stack.            │
+  │                                                                           │
+  │    // Preferred:                                                           │
+  │    Deque<String> stack = new ArrayDeque<>();                               │
+  └──────────────────────────────────────────────────────────────────────────┘
+
+  ┌─ Q12 ★★ ─────────────────────────────────────────────────────────────────┐
+  │  What is the difference between poll() and remove() in Queue?             │
+  ├──────────────────────────────────────────────────────────────────────────┤
+  │  poll()   → Returns and removes head. Returns NULL if queue is empty.     │
+  │  remove() → Returns and removes head. Throws NoSuchElementException       │
+  │             if queue is empty.                                            │
+  │                                                                           │
+  │  Similarly:                                                               │
+  │  peek()   → Returns head without removing. Returns null if empty.         │
+  │  element()→ Returns head without removing. Throws exception if empty.     │
+  └──────────────────────────────────────────────────────────────────────────┘
+
+  ┌─ Q13 ★★ ─────────────────────────────────────────────────────────────────┐
+  │  How do you sort a Map by value (without stream)?                         │
+  ├──────────────────────────────────────────────────────────────────────────┤
+  │   Map<String,Integer> map = new HashMap<>();                               │
+  │   map.put("Alice", 90); map.put("Bob", 70); map.put("Charlie", 85);       │
+  │                                                                           │
+  │   // Step 1: convert entrySet to List                                     │
+  │   List<Map.Entry<String,Integer>> entries = new ArrayList<>(map.entrySet()); │
+  │                                                                           │
+  │   // Step 2: sort by value using Comparator                               │
+  │   Collections.sort(entries, (a, b) -> a.getValue() - b.getValue());       │
+  │                                                                           │
+  │   // Step 3: put into LinkedHashMap to preserve order                     │
+  │   Map<String,Integer> sorted = new LinkedHashMap<>();                      │
+  │   for (Map.Entry<String,Integer> e : entries) {                           │
+  │       sorted.put(e.getKey(), e.getValue());                               │
+  │   }                                                                       │
+  │   System.out.println(sorted);  // {Bob=70, Charlie=85, Alice=90}         │
+  └──────────────────────────────────────────────────────────────────────────┘
+
+  ┌─ Q14 ★★ ─────────────────────────────────────────────────────────────────┐
+  │  How to remove duplicates from a List without stream?                     │
+  ├──────────────────────────────────────────────────────────────────────────┤
+  │   List<String> list = Arrays.asList("a","b","a","c","b","d");              │
+  │                                                                           │
+  │   // Method 1 — order NOT preserved (HashSet)                             │
+  │   List<String> nodup1 = new ArrayList<>(new HashSet<>(list));             │
+  │                                                                           │
+  │   // Method 2 — order PRESERVED (LinkedHashSet)                           │
+  │   List<String> nodup2 = new ArrayList<>(new LinkedHashSet<>(list));       │
+  └──────────────────────────────────────────────────────────────────────────┘
+
+  ┌─ Q15 ★★★ ────────────────────────────────────────────────────────────────┐
+  │  What happens when two keys have the same hashCode in HashMap?            │
+  ├──────────────────────────────────────────────────────────────────────────┤
+  │  This is called a Hash Collision. Steps:                                  │
+  │  1. Both keys go to the same bucket (array index).                        │
+  │  2. Java uses equals() to compare them:                                   │
+  │      a. If equals() returns true → same key → value is overwritten.       │
+  │      b. If equals() returns false → different keys → chained in the       │
+  │         bucket as a LinkedList (or TreeNode if > 8 entries, Java 8+).     │
+  │  3. On get(), hashCode() finds the bucket, then equals() finds the entry. │
+  │                                                                           │
+  │  ► Always override both hashCode() AND equals() in custom key classes.   │
+  └──────────────────────────────────────────────────────────────────────────┘
+
+  ┌─ Q16 ★★★ ────────────────────────────────────────────────────────────────┐
+  │  What is the difference between Comparable and Comparator?                │
+  ├──────────────────────────────────────────────────────────────────────────┤
+  │  Comparable  (java.lang):                                                  │
+  │   ▸ Interface with compareTo(T o) method                                  │
+  │   ▸ Class defines its own natural ordering                                │
+  │   ▸ Modifies the class itself                                             │
+  │   ▸ Used by: TreeSet, TreeMap, Collections.sort() by default              │
+  │   ▸ Example: String, Integer already implement Comparable                 │
+  │                                                                           │
+  │  Comparator  (java.util):                                                 │
+  │   ▸ Functional Interface with compare(T a, T b) method                    │
+  │   ▸ External sorting logic — does NOT change the class                    │
+  │   ▸ Multiple comparators possible for same class                          │
+  │   ▸ Example: (a,b) -> a.length()-b.length()  to sort by string length    │
+  │                                                                           │
+  │   class Student implements Comparable<Student> {                          │
+  │       int marks;                                                           │
+  │       public int compareTo(Student o) { return this.marks - o.marks; }    │
+  │   }                                                                        │
+  │                                                                           │
+  │   // Comparator (external, flexible)                                       │
+  │   Comparator<Student> byName = (a,b) -> a.name.compareTo(b.name);         │
+  └──────────────────────────────────────────────────────────────────────────┘
+
+  ┌─ Q17 ★★★ ────────────────────────────────────────────────────────────────┐
+  │  What is ConcurrentHashMap? How is it different from HashMap?             │
+  ├──────────────────────────────────────────────────────────────────────────┤
+  │  ConcurrentHashMap (java.util.concurrent):                                │
+  │   ▸ Thread-safe version of HashMap                                        │
+  │   ▸ Uses segment locking (Java 7) / CAS + synchronized blocks (Java 8+)  │
+  │   ▸ Does NOT lock the entire map on put() — only locks affected bucket    │
+  │   ▸ NULL key and NULL value NOT allowed                                   │
+  │   ▸ Fail-safe iterator — no ConcurrentModificationException               │
+  │                                                                           │
+  │  ┌──────────────────┬────────────────────┬──────────────────────────┐     │
+  │  │  Feature         │  HashMap           │  ConcurrentHashMap       │     │
+  │  ├──────────────────┼────────────────────┼──────────────────────────┤     │
+  │  │  Thread-safe     │  No                │  Yes                     │     │
+  │  │  Null key        │  One allowed       │  Not allowed             │     │
+  │  │  Performance     │  Fast (single)     │  Slightly slower         │     │
+  │  │  Locking         │  None              │  Bucket-level locking    │     │
+  │  └──────────────────┴────────────────────┴──────────────────────────┘     │
+  └──────────────────────────────────────────────────────────────────────────┘
+
+  ┌─ Q18 ★★★ ────────────────────────────────────────────────────────────────┐
+  │  What is the initial capacity and load factor of HashMap?                 │
+  ├──────────────────────────────────────────────────────────────────────────┤
+  │  Initial capacity : 16 (default number of buckets)                        │
+  │  Load factor      : 0.75 (default)                                        │
+  │                                                                           │
+  │  When the map is 75% full → it resizes (doubles) and rehashes all entries.│
+  │  Rehashing is expensive — if you know the size upfront, set capacity:     │
+  │                                                                           │
+  │    Map<String,Integer> map = new HashMap<>(100);   // 100 buckets upfront │
+  │                                                                           │
+  │  Lower load factor  → fewer collisions, more memory                        │
+  │  Higher load factor → more collisions, less memory                         │
+  └──────────────────────────────────────────────────────────────────────────┘
+
+  ┌─ Q19 ★★ ─────────────────────────────────────────────────────────────────┐
+  │  What is the difference between List.of() and new ArrayList<>()?          │
+  ├──────────────────────────────────────────────────────────────────────────┤
+  │  List.of("A","B","C")   — Java 9+                                         │
+  │   ▸ Returns an IMMUTABLE list                                             │
+  │   ▸ add(), remove(), set() throw UnsupportedOperationException            │
+  │   ▸ NULL not allowed                                                       │
+  │   ▸ Fixed size — cannot grow                                              │
+  │                                                                           │
+  │  new ArrayList<>(Arrays.asList("A","B","C"))                              │
+  │   ▸ Returns a MUTABLE list                                                │
+  │   ▸ All operations allowed                                                │
+  │   ▸ NULL allowed                                                           │
+  └──────────────────────────────────────────────────────────────────────────┘
+
+  ┌─ Q20 ★★ ─────────────────────────────────────────────────────────────────┐
+  │  How does PriorityQueue maintain order? Is it fully sorted?               │
+  ├──────────────────────────────────────────────────────────────────────────┤
+  │  PriorityQueue uses a Min-Heap (binary heap) internally.                  │
+  │   ▸ It is NOT fully sorted — only the head (peek/poll) is the minimum.    │
+  │   ▸ Internal array may not appear sorted when printed directly.           │
+  │   ▸ Each poll() extracts the minimum and re-heapifies → O(log n).        │
+  │   ▸ To get sorted output, keep polling until empty.                       │
+  │                                                                           │
+  │   PriorityQueue<Integer> pq = new PriorityQueue<>(Arrays.asList(5,1,3)); │
+  │   System.out.println(pq);          // [1, 5, 3] ← heap order, not sorted │
+  │   System.out.println(pq.poll());   // 1  ← always minimum                │
+  └──────────────────────────────────────────────────────────────────────────┘
+
+  ┌─ Q21 ★★★ ────────────────────────────────────────────────────────────────┐
+  │  How to make a Collection thread-safe without using                       │
+  │  ConcurrentHashMap or Vector?                                             │
+  ├──────────────────────────────────────────────────────────────────────────┤
+  │  Use Collections.synchronized___() wrapper methods:                       │
+  │                                                                           │
+  │   List<String>  syncList = Collections.synchronizedList(new ArrayList<>());│
+  │   Set<String>   syncSet  = Collections.synchronizedSet(new HashSet<>());  │
+  │   Map<String,Integer> syncMap = Collections.synchronizedMap(new HashMap<>());│
+  │                                                                           │
+  │   // IMPORTANT: still need manual synchronization when iterating:         │
+  │   synchronized(syncList) {                                                │
+  │       for (String s : syncList) {                                         │
+  │           System.out.println(s);                                          │
+  │       }                                                                   │
+  │   }                                                                       │
+  └──────────────────────────────────────────────────────────────────────────┘
+
+  ┌─ Q22 ★ ──────────────────────────────────────────────────────────────────┐
+  │  What is the difference between peek(), poll() and remove() in Queue?     │
+  ├──────────────────────────────────────────────────────────────────────────┤
+  │  ┌─────────────┬──────────────────┬──────────────────────────────────┐    │
+  │  │  Method     │  Retrieves head  │  Behavior when empty             │    │
+  │  ├─────────────┼──────────────────┼──────────────────────────────────┤    │
+  │  │  peek()     │  Yes (no remove) │  Returns null                    │    │
+  │  │  element()  │  Yes (no remove) │  Throws NoSuchElementException   │    │
+  │  │  poll()     │  Yes (removes)   │  Returns null                    │    │
+  │  │  remove()   │  Yes (removes)   │  Throws NoSuchElementException   │    │
+  │  └─────────────┴──────────────────┴──────────────────────────────────┘    │
+  └──────────────────────────────────────────────────────────────────────────┘
+
+  ┌─ Q23 ★★ ─────────────────────────────────────────────────────────────────┐
+  │  What is a WeakHashMap?                                                   │
+  ├──────────────────────────────────────────────────────────────────────────┤
+  │  A Map implementation where keys are held with WEAK references.           │
+  │   ▸ If a key has no strong reference elsewhere, the GC can collect it.    │
+  │   ▸ The entry is automatically removed when the key is garbage collected. │
+  │   ▸ Use case: caches, metadata stores where entries should expire         │
+  │     automatically when the key object is no longer in use.               │
+  │                                                                           │
+  │   WeakHashMap<Object,String> cache = new WeakHashMap<>();                 │
+  └──────────────────────────────────────────────────────────────────────────┘
+
+  ┌─ Q24 ★★★ ────────────────────────────────────────────────────────────────┐
+  │  What is the difference between TreeMap and HashMap when used as a cache? │
+  ├──────────────────────────────────────────────────────────────────────────┤
+  │  HashMap   → O(1) get/put. Best for simple key-value cache.               │
+  │  TreeMap   → O(log n) get/put. Use when you need sorted keys or range     │
+  │              queries — e.g. a time-based cache where you need to find     │
+  │              all events between two timestamps.                           │
+  │  LinkedHashMap → O(1) + insertion/access order → ideal for LRU cache.    │
+  └──────────────────────────────────────────────────────────────────────────┘
+
+  ┌─ Q25 ★★ ─────────────────────────────────────────────────────────────────┐
+  │  What is EnumSet and EnumMap? When do you use them?                       │
+  ├──────────────────────────────────────────────────────────────────────────┤
+  │  EnumSet  (java.util):                                                    │
+  │   ▸ High-performance Set for enum values                                  │
+  │   ▸ Internally uses bit vector → extremely fast                           │
+  │   ▸ All elements must be from a single Enum type                          │
+  │                                                                           │
+  │   EnumSet<Day> weekend = EnumSet.of(Day.SATURDAY, Day.SUNDAY);            │
+  │                                                                           │
+  │  EnumMap  (java.util):                                                    │
+  │   ▸ Map with Enum keys — faster than HashMap for enum keys                │
+  │   ▸ Internally stored as array indexed by enum ordinal                    │
+  │                                                                           │
+  │   EnumMap<Day, String> schedule = new EnumMap<>(Day.class);               │
+  │   schedule.put(Day.MONDAY, "Meeting");                                    │
+  └──────────────────────────────────────────────────────────────────────────┘
+
+
+  ╭──────────────────────────────────────────────────────────────────────────────╮
+  │  SECTION B  │  Scenario / Coding Questions                                  │
+  ╰──────────────────────────────────────────────────────────────────────────────╯
+
+  ┌─ Q26 ★ ──────────────────────────────────────────────────────────────────┐
+  │  Find frequency of each character in a String using Map.                  │
+  ├──────────────────────────────────────────────────────────────────────────┤
+  │   String str = "programming";                                             │
+  │   Map<Character, Integer> freq = new LinkedHashMap<>();                   │
+  │                                                                           │
+  │   for (char c : str.toCharArray()) {                                      │
+  │       freq.merge(c, 1, Integer::sum);                                     │
+  │   }                                                                       │
+  │   System.out.println(freq);                                               │
+  │   // {p=1, r=2, o=1, g=2, a=1, m=2, i=1, n=1}                           │
+  └──────────────────────────────────────────────────────────────────────────┘
+
+  ┌─ Q27 ★ ──────────────────────────────────────────────────────────────────┐
+  │  Find the first non-repeated character in a String using Map.             │
+  ├──────────────────────────────────────────────────────────────────────────┤
+  │   String s = "aabbcde";                                                   │
+  │   Map<Character, Integer> freq = new LinkedHashMap<>();                   │
+  │                                                                           │
+  │   for (char c : s.toCharArray()) {                                        │
+  │       freq.merge(c, 1, Integer::sum);                                     │
+  │   }                                                                       │
+  │   for (Map.Entry<Character,Integer> e : freq.entrySet()) {                │
+  │       if (e.getValue() == 1) {                                            │
+  │           System.out.println("First unique: " + e.getKey()); // c        │
+  │           break;                                                          │
+  │       }                                                                   │
+  │   }                                                                       │
+  └──────────────────────────────────────────────────────────────────────────┘
+
+  ┌─ Q28 ★★ ─────────────────────────────────────────────────────────────────┐
+  │  Reverse a String using ArrayDeque (Stack).                               │
+  ├──────────────────────────────────────────────────────────────────────────┤
+  │   String input = "Hello";                                                 │
+  │   Deque<Character> stack = new ArrayDeque<>();                             │
+  │                                                                           │
+  │   for (char c : input.toCharArray()) {                                    │
+  │       stack.push(c);                                                      │
+  │   }                                                                       │
+  │   StringBuilder sb = new StringBuilder();                                 │
+  │   while (!stack.isEmpty()) {                                              │
+  │       sb.append(stack.pop());                                             │
+  │   }                                                                       │
+  │   System.out.println(sb.toString());   // olleH                          │
+  └──────────────────────────────────────────────────────────────────────────┘
+
+  ┌─ Q29 ★★ ─────────────────────────────────────────────────────────────────┐
+  │  Group words by length using Map<Integer, List<String>>.                  │
+  ├──────────────────────────────────────────────────────────────────────────┤
+  │   String[] words = {"cat","dog","elephant","ant","bear","ox"};             │
+  │   Map<Integer, List<String>> grouped = new TreeMap<>();                   │
+  │                                                                           │
+  │   for (String w : words) {                                                │
+  │       int len = w.length();                                               │
+  │       if (!grouped.containsKey(len)) {                                    │
+  │           grouped.put(len, new ArrayList<>());                            │
+  │       }                                                                   │
+  │       grouped.get(len).add(w);                                            │
+  │   }                                                                       │
+  │   System.out.println(grouped);                                            │
+  │   // {2=[ox], 3=[cat,dog,ant], 4=[bear], 8=[elephant]}                   │
+  └──────────────────────────────────────────────────────────────────────────┘
+
+  ┌─ Q30 ★★ ─────────────────────────────────────────────────────────────────┐
+  │  Check if two strings are anagrams using Map.                             │
+  ├──────────────────────────────────────────────────────────────────────────┤
+  │   boolean isAnagram(String s1, String s2) {                               │
+  │       if (s1.length() != s2.length()) return false;                       │
+  │       Map<Character,Integer> map = new HashMap<>();                       │
+  │       for (char c : s1.toCharArray()) map.merge(c, 1, Integer::sum);     │
+  │       for (char c : s2.toCharArray()) map.merge(c, -1, Integer::sum);    │
+  │       for (int v : map.values()) { if (v != 0) return false; }           │
+  │       return true;                                                        │
+  │   }                                                                       │
+  │                                                                           │
+  │   System.out.println(isAnagram("listen","silent")); // true               │
+  │   System.out.println(isAnagram("hello","world"));   // false              │
+  └──────────────────────────────────────────────────────────────────────────┘
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+
+  ╔══════════════════════════════════════════════════════════════════════════════╗
+  ║                    CHOOSE THE RIGHT COLLECTION — Decision Guide              ║
+  ╠══════════════════════════════════════════════════════════════════════════════╣
+  ║                                                                              ║
+  ║   Need to store a sequence with duplicates?                                  ║
+  ║     YES → List                                                               ║
+  ║       Need fast index access?        → ArrayList                            ║
+  ║       Need fast insert/delete at ends? → ArrayDeque / LinkedList            ║
+  ║                                                                              ║
+  ║   Need unique elements only?                                                 ║
+  ║     YES → Set                                                                ║
+  ║       Need sorted order?             → TreeSet                              ║
+  ║       Need insertion order?          → LinkedHashSet                        ║
+  ║       Need fastest ops, no order?    → HashSet                              ║
+  ║                                                                              ║
+  ║   Need key-value pairs?                                                      ║
+  ║     YES → Map                                                                ║
+  ║       Need sorted by key?            → TreeMap                              ║
+  ║       Need insertion order?          → LinkedHashMap                        ║
+  ║       Need fastest ops, no order?    → HashMap                              ║
+  ║       Need thread-safety?            → ConcurrentHashMap                   ║
+  ║                                                                              ║
+  ║   Need priority-based processing?                                            ║
+  ║     YES → PriorityQueue                                                      ║
+  ║                                                                              ║
+  ║   Need a Stack or Queue efficiently?                                         ║
+  ║     YES → ArrayDeque  (preferred over Stack class)                           ║
+  ║                                                                              ║
+  ╚══════════════════════════════════════════════════════════════════════════════╝
+
+
+  ┌──────────────────────────────────────────────────────────────────────────┐
+  │                     Q U I C K  S U M M A R Y                             │
+  ├──────────────────────────────────────────────────────────────────────────┤
+  │                                                                           │
+  │  ArrayList      →  Default List. Fast index access.                      │
+  │  LinkedList     →  List + Deque. Fast head/tail ops.                     │
+  │  HashSet        →  Fastest Set. No order. No duplicates.                 │
+  │  LinkedHashSet  →  Set + insertion order preserved.                      │
+  │  TreeSet        →  Sorted Set. Range queries available.                  │
+  │  HashMap        →  Fastest Map. No order. One null key.                  │
+  │  LinkedHashMap  →  Map + insertion order. Great for LRU cache.           │
+  │  TreeMap        →  Sorted Map. Range sub-map available.                  │
+  │  PriorityQueue  →  Min-heap. Priority-based poll().                      │
+  │  ArrayDeque     →  Fast Stack + Queue. Prefer over Stack class.          │
+  │                                                                           │
+  └───────────────────────────────────────────────────────────────────────────┘

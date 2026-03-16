@@ -1,0 +1,186 @@
+================================================================================
+          Java Collections - Practical Guide (without Streams)
+                     Most frequently used in real projects & interviews
+                                 March 2026
+================================================================================
+
+1. ArrayList
+   • Ordered (maintains insertion order)
+   • Indexed (fast random access)
+   • Internally uses dynamic array
+   • Best choice when: mostly read, occasional add/remove at end
+
+   Practical uses:
+   - List of search results
+   - List of items in shopping cart
+   - Recently viewed products
+   - Small-to-medium lists where order matters
+
+   Example:
+   List<String> names = new ArrayList<>();
+   names.add("Alice");
+   names.add("Bob");
+   names.add("Charlie");
+   System.out.println(names.get(1));          // Bob
+   names.remove(0);                           // removes Alice
+   names.add(1, "David");                     // inserts at index 1
+
+
+2. LinkedList
+   • Ordered
+   • Doubly-linked list
+   • Fast add/remove at both ends (beginning & end)
+   • Slow random access (O(n))
+
+   Practical uses (much less common than ArrayList):
+   - Queue / Deque implementation
+   - When you do a lot of addFirst(), addLast(), removeFirst(), removeLast()
+   - Browser history (back/forward)
+
+   Example:
+   LinkedList<String> history = new LinkedList<>();
+   history.addFirst("page1");   // newest
+   history.addFirst("page2");
+   history.removeLast();        // remove oldest
+
+
+3. HashSet
+   • No duplicates
+   • No order guarantee (before Java 21 almost random)
+   • Very fast contains(), add(), remove() → O(1) average
+
+   Practical uses:
+   - Remove duplicates from a list
+   - Check if user already voted / liked / visited
+   - Collecting unique tags/categories/keywords
+
+   Example:
+   Set<String> uniqueEmails = new HashSet<>();
+   uniqueEmails.add("a@example.com");
+   uniqueEmails.add("b@example.com");
+   uniqueEmails.add("a@example.com");   // ignored
+   System.out.println(uniqueEmails.contains("a@example.com"));  // true
+
+
+4. LinkedHashSet
+   • HashSet + maintains insertion order
+   • Slightly slower than HashSet, more memory
+
+   Practical uses:
+   - Unique items but want to keep the order they were first seen
+   - "Recent searches" that shouldn't have duplicates
+
+   Example:
+   Set<String> recentSearches = new LinkedHashSet<>();
+   recentSearches.add("java");
+   recentSearches.add("spring");
+   recentSearches.add("java");        // ignored, but order preserved
+
+
+5. TreeSet
+   • Sorted (natural order or custom Comparator)
+   • No duplicates
+   • Red-Black tree → log(n) for add/contain/remove
+
+   Practical uses:
+   - Sorted unique elements (leaderboards, priority tasks)
+   - Range queries (subset, headSet, tailSet)
+
+   Example:
+   Set<Integer> scores = new TreeSet<>();
+   scores.add(850);
+   scores.add(920);
+   scores.add(720);
+   // Order: 720, 850, 920
+
+   NavigableSet<Integer> highScores = new TreeSet<>(scores);
+   System.out.println(highScores.tailSet(800));   // [850, 920]
+
+
+6. HashMap
+   • Key → Value pairs
+   • No order (random-like)
+   • Fastest general-purpose map → O(1) average
+
+   Practical uses:
+   - Cache (userId → User object)
+   - Configuration properties
+   - Grouping/counting (word → frequency)
+   - Quick lookups by ID/email/username
+
+   Example:
+   Map<Long, String> userById = new HashMap<>();
+   userById.put(1001L, "Alice");
+   userById.put(1007L, "Bob");
+   System.out.println(userById.get(1001L));        // Alice
+   System.out.println(userById.containsKey(9999L)); // false
+
+
+7. LinkedHashMap
+   • HashMap + insertion order (or access order with LRU)
+
+   Practical uses:
+   - LRU Cache (access-order mode)
+   - "Recently used" items in UI
+   - Keeping stable order in API responses
+
+   Example (insertion order):
+   Map<String, Integer> scores = new LinkedHashMap<>();
+   scores.put("Bob", 120);
+   scores.put("Alice", 180);
+   scores.put("Charlie", 95);
+   // iteration order: Bob → Alice → Charlie
+
+
+8. TreeMap
+   • Sorted by keys (natural or Comparator)
+   • Red-Black tree → log(n) operations
+
+   Practical uses:
+   - Sorted dictionary / phone book
+   - Range-based lookups
+   - Priority-based configuration
+
+   Example:
+   Map<String, Integer> ageByName = new TreeMap<>();
+   ageByName.put("Zoe", 28);
+   ageByName.put("Adam", 35);
+   ageByName.put("Bob", 19);
+   // iteration order: Adam → Bob → Zoe
+
+
+================================================================================
+                   MOST FREQUENT INTERVIEW QUESTIONS
+                 (Java Collections – practical focus)
+================================================================================
+
+Basic / Warm-up
+1. What is the difference between ArrayList and LinkedList? When to use which?
+2. Can you store a primitive in an ArrayList? Why / why not?
+3. What happens when ArrayList reaches its capacity?
+4. Why is HashMap faster than TreeMap for most operations?
+5. Can we use null as key in HashMap? What about TreeMap?
+
+Intermediate
+6. How does HashSet guarantee uniqueness internally?
+7. Explain the internal working of HashMap (buckets, hash, equals, resize).
+8. What is the difference between HashMap, LinkedHashMap and TreeMap?
+9. How to create a thread-safe map? (Collections.synchronizedMap vs ConcurrentHashMap)
+10. When would you prefer ConcurrentHashMap over synchronized HashMap?
+11. What is the default initial capacity and load factor of HashMap?
+12. Explain fail-fast vs fail-safe iterators. Which collections are fail-fast?
+
+Practical / Coding-style
+13. How would you remove duplicates from an ArrayList while preserving order?
+14. How to sort a HashMap by values?
+15. How to find the first non-repeating character in a string? (using collections)
+16. Implement a simple LRU Cache using LinkedHashMap.
+17. How to get only the keys / values / entries from a Map?
+18. Given a list of transactions, group them by userId (Map<Long, List<Transaction>>)
+
+Tricky / Advanced
+19. Can we use a mutable object as key in HashMap? What problems can occur?
+20. What happens if two objects have same hashCode() but are not equal?
+21. Why should we override both equals() and hashCode() together?
+22. Difference between remove() in Iterator vs Collection.remove()?
+23. How does ConcurrentHashMap achieve thread-safety without locking the whole map?

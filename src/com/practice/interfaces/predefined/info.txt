@@ -1,0 +1,609 @@
+  ┌─────────────────────────────────────────────────────────────────────────────┐
+  │                      THE 4 PILLARS  (Core FIs)                              │
+  │          Everything else in java.util.function is built on these            │
+  └─────────────────────────────────────────────────────────────────────────────┘
+
+         ┌─────────────┐   ┌─────────────┐   ┌─────────────┐   ┌─────────────┐
+         │  Predicate  │   │  Function   │   │  Consumer   │   │  Supplier   │
+         │   TEST it   │   │TRANSFORM it │   │   USE it    │   │ PRODUCE it  │
+         │  T → bool   │   │   T → R     │   │  T → void   │   │  () → T     │
+         └─────────────┘   └─────────────┘   └─────────────┘   └─────────────┘
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  ╭─────────────────────────────────────────────────────────────────────────────╮
+  │  01  │  Predicate<T>                          [ java.util.function ]        │
+  ╰─────────────────────────────────────────────────────────────────────────────╯
+
+  ▸ Purpose        : Test a condition on input T → returns boolean
+  ▸ Abstract Method: boolean test(T t)
+  ▸ Use When       : Filtering, validation, conditional checks
+
+  ┌─ Signature ──────────────────────────────────────────────────────────────-┐
+  │                                                                           │
+  │   @FunctionalInterface                                                    │
+  │   public interface Predicate<T> {                                         │
+  │       boolean test(T t);                                                  │
+  │   }                                                                       │
+  │                                                                           │
+  └───────────────────────────────────────────────────────────────────────────┘
+  ┌─ Practical Examples ─────────────────────────────────────────────────────┐
+  │                                                                          │
+  │   Predicate<String>  isEmail   = s -> s.contains("@");                   │
+  │   Predicate<Integer> isAdult   = age -> age >= 18;                       │
+  │   Predicate<String>  notEmpty  = s -> !s.isBlank();                      │
+  │                                                                          │
+  │   // Usage                                                               │
+  │   System.out.println(isEmail.test("user@gmail.com"));  // true           │
+  │   System.out.println(isAdult.test(15));                // false          │
+  │                                                                          │
+  └──────────────────────────────────────────────────────────────────────────┘
+  ┌─ Composing Predicates ───────────────────────────────────────────────────-┐
+  │                                                                           │
+  │   Predicate<String> notEmptyEmail = notEmpty.and(isEmail);  // AND        │
+  │   Predicate<String> emailOrEmpty  = isEmail.or(notEmpty);   // OR         │
+  │   Predicate<String> notAnEmail    = isEmail.negate();        // NOT       │
+  │                                                                           │
+  │   // Real-world: validate user signup                                     │
+  │   Predicate<String> validUsername = s -> !s.isBlank()                     │
+  │                                 .and(s -> s.length() <= 20)               │
+  │                                 .and(s -> s.matches("[a-zA-Z0-9_]+"));    │
+  │                                                                           │
+  └───────────────────────────────────────────────────────────────────────────┘
+
+  ★ Key default methods: and(), or(), negate(), isEqual()
+
+PURPOSE: Takes one input and returns a boolean value. Used for filtering/testing.
+METHOD : boolean test(T t)
+
+>> EXAMPLE:
+   Predicate<Integer> isSenior = (age) -> age >= 60;
+   System.out.println(isSenior.test(65)); // Output: true
+
+>> REAL-WORLD USE:
+   Checking if a user is logged in, if a string is empty, or if a price is high
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  ╭─────────────────────────────────────────────────────────────────────────────╮
+  │  02  │  Function<T, R>                        [ java.util.function ]        │
+  ╰─────────────────────────────────────────────────────────────────────────────╯
+
+  ▸ Purpose        : Transform input of type T into output of type R
+  ▸ Abstract Method: R apply(T t)
+  ▸ Use When       : Mapping, converting, extracting a value
+
+  ┌─ Signature ─────────────────────────────────────────────────────────────-─┐
+  │                                                                           │
+  │   @FunctionalInterface                                                    │
+  │   public interface Function<T, R> {                                       │
+  │       R apply(T t);                                                       │
+  │   }                                                                       │
+  │                                                                           │
+  └───────────────────────────────────────────────────────────────────────────┘
+  ┌─ Practical Examples ────────────────────────────────────────────────────-─┐
+  │                                                                           │
+  │   Function<String, Integer>  strLen    = s -> s.length();                 │
+  │   Function<String, String>   toUpper   = String::toUpperCase;             │
+  │   Function<Integer, String>  intToStr  = i -> "Value: " + i;              │
+  │                                                                           │
+  │   // Usage                                                                │
+  │   System.out.println(strLen.apply("Hello"));   // 5                       │
+  │   System.out.println(toUpper.apply("java"));   // JAVA                    │
+  │                                                                           │
+  └───────────────────────────────────────────────────────────────────────────┘
+  ┌─ Chaining Functions ─────────────────────────────────────────────────────-┐
+  │                                                                           │
+  │   Function<String, Integer> strLen  = s -> s.length();                    │
+  │   Function<Integer, String> toLabel = n -> "Length: " + n;                │
+  │                                                                           │
+  │   // andThen: strLen runs first, then toLabel                             │
+  │   Function<String, String> combined = strLen.andThen(toLabel);            │
+  │   System.out.println(combined.apply("Hello"));  // "Length: 5"            │
+  │                                                                           │
+  │   // compose: toLabel runs after strLen (reverse of andThen)              │
+  │   Function<String, String> composed = toLabel.compose(strLen);            │
+  │                                                                           │
+  └───────────────────────────────────────────────────────────────────────────┘
+
+  ★ Key default methods: andThen(), compose()
+  ★ Key static  method : identity()  →  returns input as-is
+
+PURPOSE: Takes one input of type T and returns a result of type R. Used for mapping.
+METHOD : R apply(T t)
+
+>> EXAMPLE:
+   Function<String, Integer> wordLength = (str) -> str.length();
+   int size = wordLength.apply("Java21"); // Output: 6
+
+>> REAL-WORLD USE:
+   Converting a Database Entity to a DTO, or converting a String to an Integer.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  ╭─────────────────────────────────────────────────────────────────────────────╮
+  │  03  │  Consumer<T>                           [ java.util.function ]        │
+  ╰─────────────────────────────────────────────────────────────────────────────╯
+
+  ▸ Purpose        : Consume / use input T, produce NO output
+  ▸ Abstract Method: void accept(T t)
+  ▸ Use When       : Printing, saving, sending — side effect operations
+
+  ┌─ Signature ─────────────────────────────────────────────────────────────-─┐
+  │                                                                           │
+  │   @FunctionalInterface                                                    │
+  │   public interface Consumer<T> {                                          │
+  │       void accept(T t);                                                   │
+  │   }                                                                       │
+  │                                                                           │
+  └───────────────────────────────────────────────────────────────────────────┘
+  ┌─ Practical Examples ─────────────────────────────────────────────────────-┐
+  │                                                                           │
+  │   Consumer<String>  print     = s -> System.out.println(s);               │
+  │   Consumer<String>  saveToDb  = s -> database.save(s);                    │
+  │   Consumer<Integer> logValue  = n -> logger.info("Value: " + n);          │
+  │                                                                           │
+  │   // Usage                                                                │
+  │   print.accept("Hello World");    // Hello World                          │
+  │                                                                           │
+  │   // Chaining consumers (both execute in order)                           │
+  │   Consumer<String> printAndSave = print.andThen(saveToDb);                │
+  │   printAndSave.accept("user data");                                       │
+  │                                                                           │
+  └───────────────────────────────────────────────────────────────────────────┘
+
+  ★ Key default method: andThen()  →  chain two consumers sequentially
+
+PURPOSE: Takes one input and returns NOTHING (void). Used for side effects.
+METHOD : void accept(T t)
+
+>> EXAMPLE:
+   Consumer<String> logger = (msg) -> System.out.println("LOG: " + msg);
+   logger.accept("Connection established."); // Output: LOG: Connection established.
+
+>> REAL-WORLD USE:
+   Printing to console, sending an email, or saving an object to a database.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  ╭─────────────────────────────────────────────────────────────────────────────╮
+  │  04  │  Supplier<T>                           [ java.util.function ]        │
+  ╰─────────────────────────────────────────────────────────────────────────────╯
+
+  ▸ Purpose        : Produce / supply a value of type T with NO input
+  ▸ Abstract Method: T get()
+  ▸ Use When       : Lazy initialization, factories, generating values
+
+  ┌─ Signature ─────────────────────────────────────────────────────────────-─┐
+  │                                                                           │
+  │   @FunctionalInterface                                                    │
+  │   public interface Supplier<T> {                                          │
+  │       T get();                                                            │
+  │   }                                                                       │
+  │                                                                           │
+  └───────────────────────────────────────────────────────────────────────────┘
+  ┌─ Practical Examples ─────────────────────────────────────────────────────-┐
+  │                                                                           │
+  │   Supplier<String>     greeting    = () -> "Hello, World!";               │
+  │   Supplier<List<String>> newList   = () -> new ArrayList<>();             │
+  │   Supplier<LocalDate>  today       = LocalDate::now;                      │
+  │   Supplier<Double>     random      = Math::random;                        │
+  │                                                                           │
+  │   // Usage                                                                │
+  │   System.out.println(greeting.get());   // Hello, World!                  │
+  │   System.out.println(today.get());      // 2026-03-14                     │
+  │                                                                           │
+  │   // Lazy init — object only created when get() is called                 │
+  │   Supplier<HeavyObject> lazy = () -> new HeavyObject();                   │
+  │   HeavyObject obj = lazy.get();  // created only here                     │
+  │                                                                           │
+  └───────────────────────────────────────────────────────────────────────────┘
+
+  ★ No default/static methods — it's a pure producer
+
+PURPOSE: Takes NO input but returns a result of type T. Used for data creation.
+METHOD : T get()
+
+>> EXAMPLE:
+   Supplier<Double> otpGenerator = () -> Math.random() * 10000;
+   System.out.println(otpGenerator.get()); // Output: 4829.32...
+
+>> REAL-WORLD USE:
+   Generating random numbers, providing current timestamps, or lazy loading.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  ╭─────────────────────────────────────────────────────────────────────────────╮
+  │  05  │  BiFunction<T, U, R>                   [ java.util.function ]        │
+  ╰─────────────────────────────────────────────────────────────────────────────╯
+
+  ▸ Purpose        : Takes TWO inputs (T, U), returns one output (R)
+  ▸ Abstract Method: R apply(T t, U u)
+  ▸ Use When       : Operations requiring two different inputs
+
+  ┌─ Practical Examples ────────────────────────────────────────────────────-─┐
+  │                                                                           │
+  │   BiFunction<String, Integer, String> repeat =                            │
+  │       (s, n) -> s.repeat(n);                                              │
+  │                                                                           │
+  │   BiFunction<Integer, Integer, Integer> add = (a, b) -> a + b;            │
+  │                                                                           │
+  │   BiFunction<String, String, String> fullName =                           │
+  │       (first, last) -> first + " " + last;                                │
+  │                                                                           │
+  │   // Usage                                                                │
+  │   System.out.println(repeat.apply("Hi", 3));         // HiHiHi            │
+  │   System.out.println(fullName.apply("John", "Doe")); // John Doe          │
+  │                                                                           │
+  └───────────────────────────────────────────────────────────────────────────┘
+
+  ★ Key default method: andThen()
+
+BI-FUNCTIONAL INTERFACES:
+   When you need TWO inputs instead of one.
+   - BiPredicate<T, U> : (a, b) -> boolean
+   - BiFunction<T, U, R> : (a, b) -> result
+   - BiConsumer<T, U> : (a, b) -> void
+
+>> EXAMPLE:
+   BiFunction<Integer, Integer, String> multiply = (a, b) -> "Result: " + (a * b);
+   System.out.println(multiply.apply(5, 4)); // Output: Result: 20
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  ╭─────────────────────────────────────────────────────────────────────────────╮
+  │  06  │  UnaryOperator<T>                      [ java.util.function ]        │
+  ╰─────────────────────────────────────────────────────────────────────────────╯
+
+  ▸ Purpose        : Takes ONE input of type T, returns SAME type T
+  ▸ Abstract Method: T apply(T t)   (extends Function<T, T>)
+  ▸ Use When       : Transforming a value and returning the same type
+
+  ┌─ Practical Examples ─────────────────────────────────────────────────────-┐
+  │                                                                           │
+  │   UnaryOperator<String>  toUpper  = String::toUpperCase;                  │
+  │   UnaryOperator<Integer> doubleIt = n -> n * 2;                           │
+  │   UnaryOperator<String>  trim     = String::trim;                         │
+  │                                                                           │
+  │   // Usage                                                                │
+  │   System.out.println(toUpper.apply("hello"));   // HELLO                  │
+  │   System.out.println(doubleIt.apply(5));         // 10                    │
+  │                                                                           │
+  │   // Chaining                                                             │
+  │   UnaryOperator<String> trimAndUpper = trim.andThen(toUpper);             │
+  │   System.out.println(trimAndUpper.apply("  hello  "));  // HELLO          │
+  │                                                                           │
+  └───────────────────────────────────────────────────────────────────────────┘
+
+  ★ Special static: UnaryOperator.identity()  →  returns the input unchanged
+
+UNARY OPERATOR<T> & BINARY OPERATOR<T>:
+   Special versions of Function where input and output types are the SAME.
+
+>> EXAMPLE:
+  UnaryOperator<Integer> square = (n) -> n * n;
+  System.out.println(square.apply(10)); // Output: 100
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  ╭─────────────────────────────────────────────────────────────────────────────╮
+  │  07  │  BinaryOperator<T>                     [ java.util.function ]        │
+  ╰─────────────────────────────────────────────────────────────────────────────╯
+
+  ▸ Purpose        : Takes TWO inputs of same type T, returns same type T
+  ▸ Abstract Method: T apply(T t1, T t2)   (extends BiFunction<T, T, T>)
+  ▸ Use When       : Combining two values of the same type
+
+  ┌─ Practical Examples ─────────────────────────────────────────────────────┐
+  │                                                                           │
+  │   BinaryOperator<Integer> add      = (a, b) -> a + b;                   │
+  │   BinaryOperator<Integer> multiply = (a, b) -> a * b;                   │
+  │   BinaryOperator<String>  concat   = (a, b) -> a + " " + b;             │
+  │   BinaryOperator<Integer> max      = (a, b) -> a > b ? a : b;           │
+  │                                                                           │
+  │   // Usage                                                                │
+  │   System.out.println(add.apply(3, 4));         // 7                      │
+  │   System.out.println(concat.apply("Hi", "there")); // Hi there           │
+  │                                                                           │
+  └───────────────────────────────────────────────────────────────────────────┘
+
+  ★ Special static methods: maxBy(Comparator), minBy(Comparator)
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  ╭─────────────────────────────────────────────────────────────────────────────╮
+  │  08  │  BiPredicate<T, U>                     [ java.util.function ]        │
+  ╰─────────────────────────────────────────────────────────────────────────────╯
+
+  ▸ Purpose        : Test a condition on TWO inputs → returns boolean
+  ▸ Abstract Method: boolean test(T t, U u)
+  ▸ Use When       : Comparing two values, matching two fields
+
+  ┌─ Practical Examples ─────────────────────────────────────────────────────┐
+  │                                                                           │
+  │   BiPredicate<String, Integer> longerThan =                              │
+  │       (s, n) -> s.length() > n;                                          │
+  │                                                                           │
+  │   BiPredicate<String, String>  startsWith =                              │
+  │       (str, prefix) -> str.startsWith(prefix);                           │
+  │                                                                           │
+  │   // Usage                                                                │
+  │   System.out.println(longerThan.test("Hello", 3));     // true           │
+  │   System.out.println(startsWith.test("Java 8", "Java")); // true         │
+  │                                                                           │
+  └───────────────────────────────────────────────────────────────────────────┘
+
+  ★ Key default methods: and(), or(), negate()
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  ╭─────────────────────────────────────────────────────────────────────────────╮
+  │  09  │  BiConsumer<T, U>                      [ java.util.function ]        │
+  ╰─────────────────────────────────────────────────────────────────────────────╯
+
+  ▸ Purpose        : Consumes TWO inputs, returns nothing (void)
+  ▸ Abstract Method: void accept(T t, U u)
+  ▸ Use When       : Operations with two inputs and side effects
+
+  ┌─ Practical Examples ─────────────────────────────────────────────────────┐
+  │                                                                           │
+  │   BiConsumer<String, Integer> printNTimes =                              │
+  │       (s, n) -> { for(int i=0; i<n; i++) System.out.println(s); };      │
+  │                                                                           │
+  │   BiConsumer<String, String>  logEntry =                                 │
+  │       (key, value) -> System.out.println(key + " = " + value);           │
+  │                                                                           │
+  │   // Usage                                                                │
+  │   printNTimes.accept("Hello", 3);    // prints Hello three times         │
+  │   logEntry.accept("user", "Alice");  // user = Alice                     │
+  │                                                                           │
+  │   // Common use: iterating a Map                                          │
+  │   Map<String, Integer> scores = Map.of("Alice", 90, "Bob", 85);          │
+  │   scores.forEach((name, score) ->                                        │
+  │       System.out.println(name + ": " + score));                          │
+  │                                                                           │
+  └───────────────────────────────────────────────────────────────────────────┘
+
+  ★ Key default method: andThen()
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  ╭─────────────────────────────────────────────────────────────────────────────╮
+  │  10  │  Runnable                              [ java.lang ]                 │
+  ╰─────────────────────────────────────────────────────────────────────────────╯
+
+  ▸ Purpose        : Represent a task with NO input and NO output
+  ▸ Abstract Method: void run()
+  ▸ Use When       : Threads, background tasks, fire-and-forget jobs
+
+  ┌─ Practical Examples ─────────────────────────────────────────────────────┐
+  │                                                                           │
+  │   Runnable greet     = () -> System.out.println("Hello from task!");     │
+  │   Runnable sendEmail = () -> emailService.send("Welcome");               │
+  │                                                                           │
+  │   // Usage                                                                │
+  │   greet.run();                           // direct call                  │
+  │   new Thread(greet).start();             // in a new thread              │
+  │   executorService.submit(sendEmail);     // via executor                 │
+  │                                                                           │
+  └───────────────────────────────────────────────────────────────────────────┘
+
+  ★ One of the oldest FIs in Java — existed before Java 8
+  ★ No default/static methods
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  ╭─────────────────────────────────────────────────────────────────────────────╮
+  │  11  │  Callable<V>                           [ java.util.concurrent ]      │
+  ╰─────────────────────────────────────────────────────────────────────────────╯
+
+  ▸ Purpose        : Like Runnable but RETURNS a value and can throw Exception
+  ▸ Abstract Method: V call() throws Exception
+  ▸ Use When       : Async tasks that return a result (Future, ExecutorService)
+
+  ┌─ Runnable vs Callable ───────────────────────────────────────────────────┐
+  │                                                                           │
+  │   ┌────────────────┬────────────────────┬─────────────────────────┐      │
+  │   │   Feature      │    Runnable        │    Callable<V>          │      │
+  │   ├────────────────┼────────────────────┼─────────────────────────┤      │
+  │   │ Return type    │  void              │  V (generic)            │      │
+  │   │ Throws         │  No checked except │  throws Exception       │      │
+  │   │ Method         │  run()             │  call()                 │      │
+  │   │ Used with      │  Thread, Executor  │  ExecutorService/Future │      │
+  │   └────────────────┴────────────────────┴─────────────────────────┘      │
+  │                                                                           │
+  └───────────────────────────────────────────────────────────────────────────┘
+  ┌─ Practical Examples ─────────────────────────────────────────────────────┐
+  │                                                                           │
+  │   Callable<Integer> fetchCount  = () -> database.countUsers();           │
+  │   Callable<String>  fetchData   = () -> apiClient.getData();             │
+  │                                                                           │
+  │   // With ExecutorService                                                 │
+  │   ExecutorService executor = Executors.newSingleThreadExecutor();         │
+  │   Future<Integer> future   = executor.submit(fetchCount);                │
+  │   Integer result           = future.get();   // blocks until done        │
+  │                                                                           │
+  └───────────────────────────────────────────────────────────────────────────┘
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  ╭─────────────────────────────────────────────────────────────────────────────╮
+  │  12  │  Comparator<T>                         [ java.util ]                 │
+  ╰─────────────────────────────────────────────────────────────────────────────╯
+
+  ▸ Purpose        : Compare two objects of type T for ordering / sorting
+  ▸ Abstract Method: int compare(T o1, T o2)
+  ▸ Use When       : Sorting collections, ordering streams
+
+  ┌─ Return Value Rules ─────────────────────────────────────────────────────┐
+  │                                                                           │
+  │   negative  →  o1 comes BEFORE o2                                        │
+  │   zero      →  o1 and o2 are EQUAL                                       │
+  │   positive  →  o1 comes AFTER  o2                                        │
+  │                                                                           │
+  └───────────────────────────────────────────────────────────────────────────┘
+  ┌─ Practical Examples ─────────────────────────────────────────────────────┐
+  │                                                                           │
+  │   Comparator<String>  byLength  = (a, b) -> a.length() - b.length();    │
+  │   Comparator<Integer> ascending = (a, b) -> a - b;                       │
+  │   Comparator<String>  alphabetical = Comparator.naturalOrder();          │
+  │                                                                           │
+  │   // Chaining comparators                                                 │
+  │   Comparator<Employee> byDept =                                          │
+  │       Comparator.comparing(Employee::getDept)                            │
+  │                  .thenComparing(Employee::getName)                       │
+  │                  .reversed();                                            │
+  │                                                                           │
+  │   List<String> names = Arrays.asList("Charlie", "Alice", "Bob");         │
+  │   names.sort(byLength);   // [Bob, Alice, Charlie]                       │
+  │                                                                           │
+  └───────────────────────────────────────────────────────────────────────────┘
+
+  ★ Rich set of static/default methods: comparing(), thenComparing(),
+    reversed(), naturalOrder(), reverseOrder(), nullsFirst(), nullsLast()
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  ╭─────────────────────────────────────────────────────────────────────────────╮
+  │  13  │  Primitive Specializations              [ java.util.function ]       │
+  ╰─────────────────────────────────────────────────────────────────────────────╯
+
+  ▸ Why they exist: Avoid boxing/unboxing overhead for int, long, double
+  ▸ Use When      : Working with primitive streams or performance-critical code
+
+  ┌─ IntFunction, LongFunction, DoubleFunction ──────────────────────────────┐
+  │                                                                           │
+  │   IntFunction<String>    intToStr = n -> "Number: " + n;                 │
+  │   LongFunction<String>   longToStr = n -> "Big: " + n;                   │
+  │   DoubleFunction<String> dblToStr  = n -> String.format("%.2f", n);      │
+  │                                                                           │
+  │   System.out.println(intToStr.apply(42));    // Number: 42               │
+  │                                                                           │
+  └───────────────────────────────────────────────────────────────────────────┘
+  ┌─ IntPredicate, LongPredicate, DoublePredicate ───────────────────────────┐
+  │                                                                           │
+  │   IntPredicate    isEven    = n -> n % 2 == 0;                           │
+  │   DoublePredicate isPositive = d -> d > 0.0;                             │
+  │                                                                           │
+  │   System.out.println(isEven.test(4));       // true                      │
+  │   System.out.println(isPositive.test(-1.5)); // false                    │
+  │                                                                           │
+  └───────────────────────────────────────────────────────────────────────────┘
+  ┌─ IntConsumer, LongConsumer, DoubleConsumer ──────────────────────────────┐
+  │                                                                           │
+  │   IntConsumer    printInt  = n -> System.out.println("int: " + n);       │
+  │   DoubleConsumer printDbl  = d -> System.out.printf("%.3f%n", d);        │
+  │                                                                           │
+  └───────────────────────────────────────────────────────────────────────────┘
+  ┌─ IntSupplier, LongSupplier, DoubleSupplier ──────────────────────────────┐
+  │                                                                           │
+  │   IntSupplier    randomInt = () -> new Random().nextInt(100);             │
+  │   DoubleSupplier pi        = () -> Math.PI;                               │
+  │                                                                           │
+  │   System.out.println(randomInt.getAsInt());   // e.g. 42                 │
+  │   System.out.println(pi.getAsDouble());       // 3.141592653589793       │
+  │                                                                           │
+  └───────────────────────────────────────────────────────────────────────────┘
+  ┌─ ToIntFunction, ToLongFunction, ToDoubleFunction ───────────────────────┐
+  │                                                                           │
+  │   ToIntFunction<String>    toLen  = s -> s.length();                     │
+  │   ToDoubleFunction<String> toFreq = s -> s.chars().distinct().count()    │
+  │                                         / (double) s.length();           │
+  │                                                                           │
+  │   System.out.println(toLen.applyAsInt("Hello"));   // 5                  │
+  │                                                                           │
+  └───────────────────────────────────────────────────────────────────────────┘
+  ┌─ IntUnaryOperator, IntBinaryOperator (and long/double variants) ────────┐
+  │                                                                           │
+  │   IntUnaryOperator  square = n -> n * n;                                 │
+  │   IntBinaryOperator sum    = (a, b) -> a + b;                            │
+  │                                                                           │
+  │   System.out.println(square.applyAsInt(5));       // 25                  │
+  │   System.out.println(sum.applyAsInt(3, 4));       // 7                   │
+  │                                                                           │
+  └───────────────────────────────────────────────────────────────────────────┘
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  ╔══════════════════════════════════════════════════════════════════════════════╗
+  ║               COMPLETE REFERENCE TABLE  —  All Major FIs                    ║
+  ╠══════════════════════════════╦══════════════════════════╦═══════════════════╣
+  ║  Interface                   ║  Abstract Method         ║  Input → Output   ║
+  ╠══════════════════════════════╬══════════════════════════╬═══════════════════╣
+  ║  Predicate<T>                ║  boolean test(T)         ║  T → boolean      ║
+  ║  BiPredicate<T,U>            ║  boolean test(T,U)       ║  T,U → boolean    ║
+  ║  IntPredicate                ║  boolean test(int)       ║  int → boolean    ║
+  ║  LongPredicate               ║  boolean test(long)      ║  long → boolean   ║
+  ║  DoublePredicate             ║  boolean test(double)    ║  double → boolean ║
+  ╠══════════════════════════════╬══════════════════════════╬═══════════════════╣
+  ║  Function<T,R>               ║  R apply(T)              ║  T → R            ║
+  ║  BiFunction<T,U,R>           ║  R apply(T,U)            ║  T,U → R          ║
+  ║  IntFunction<R>              ║  R apply(int)            ║  int → R          ║
+  ║  LongFunction<R>             ║  R apply(long)           ║  long → R         ║
+  ║  DoubleFunction<R>           ║  R apply(double)         ║  double → R       ║
+  ║  ToIntFunction<T>            ║  int applyAsInt(T)       ║  T → int          ║
+  ║  ToLongFunction<T>           ║  long applyAsLong(T)     ║  T → long         ║
+  ║  ToDoubleFunction<T>         ║  double applyAsDouble(T) ║  T → double       ║
+  ╠══════════════════════════════╬══════════════════════════╬═══════════════════╣
+  ║  UnaryOperator<T>            ║  T apply(T)              ║  T → T            ║
+  ║  IntUnaryOperator            ║  int applyAsInt(int)     ║  int → int        ║
+  ║  LongUnaryOperator           ║  long applyAsLong(long)  ║  long → long      ║
+  ║  DoubleUnaryOperator         ║  double applyAsDouble(..)║  double → double  ║
+  ║  BinaryOperator<T>           ║  T apply(T,T)            ║  T,T → T          ║
+  ║  IntBinaryOperator           ║  int applyAsInt(int,int) ║  int,int → int    ║
+  ╠══════════════════════════════╬══════════════════════════╬═══════════════════╣
+  ║  Consumer<T>                 ║  void accept(T)          ║  T → void         ║
+  ║  BiConsumer<T,U>             ║  void accept(T,U)        ║  T,U → void       ║
+  ║  IntConsumer                 ║  void accept(int)        ║  int → void       ║
+  ║  LongConsumer                ║  void accept(long)       ║  long → void      ║
+  ║  DoubleConsumer              ║  void accept(double)     ║  double → void    ║
+  ╠══════════════════════════════╬══════════════════════════╬═══════════════════╣
+  ║  Supplier<T>                 ║  T get()                 ║  () → T           ║
+  ║  IntSupplier                 ║  int getAsInt()          ║  () → int         ║
+  ║  LongSupplier                ║  long getAsLong()        ║  () → long        ║
+  ║  DoubleSupplier              ║  double getAsDouble()    ║  () → double      ║
+  ║  BooleanSupplier             ║  boolean getAsBoolean()  ║  () → boolean     ║
+  ╠══════════════════════════════╬══════════════════════════╬═══════════════════╣
+  ║  Runnable                    ║  void run()              ║  () → void        ║
+  ║  Callable<V>                 ║  V call()                ║  () → V           ║
+  ║  Comparator<T>               ║  int compare(T,T)        ║  T,T → int        ║
+  ╚══════════════════════════════╩══════════════════════════╩═══════════════════╝
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  ╔══════════════════════════════════════════════════════════════════════════════╗
+  ║              HOW TO CHOOSE THE RIGHT FI  —  Decision Guide                  ║
+  ╠══════════════════════════════════════════════════════════════════════════════╣
+  ║                                                                              ║
+  ║   Q: Does it take input?                                                     ║
+  ║      NO  ──────────────────────────────────► Supplier<T>  or  Runnable      ║
+  ║                                               (returns T)      (void)        ║
+  ║      YES ─► Does it return something?                                        ║
+  ║               NO  ─────────────────────────► Consumer<T>  or  BiConsumer    ║
+  ║                                               (1 input)        (2 inputs)    ║
+  ║               YES ─► Is the return boolean?                                  ║
+  ║                         YES ───────────────► Predicate<T> or  BiPredicate   ║
+  ║                         NO  ─► Same type in/out?                             ║
+  ║                                  YES ──────► UnaryOperator / BinaryOperator ║
+  ║                                  NO  ──────► Function<T,R> or BiFunction    ║
+  ║                                                                              ║
+  ╚══════════════════════════════════════════════════════════════════════════════╝
+
+  ┌──────────────────────────────────────────────────────────────────────────┐
+  │                     Q U I C K  S U M M A R Y                             │
+  ├──────────────────────────────────────────────────────────────────────────┤
+  │                                                                           │
+  │  Predicate<T>        →  boolean test(T)           T → boolean            │
+  │  Function<T,R>       →  R apply(T)                T → R                  │
+  │  Consumer<T>         →  void accept(T)            T → void               │
+  │  Supplier<T>         →  T get()                   () → T                 │
+  │  BiFunction<T,U,R>   →  R apply(T,U)              T,U → R               │
+  │  UnaryOperator<T>    →  T apply(T)                T → T (same type)      │
+  │  BinaryOperator<T>   →  T apply(T,T)              T,T → T (same type)    │
+  │  BiPredicate<T,U>    →  boolean test(T,U)         T,U → boolean          │
+  │  BiConsumer<T,U>     →  void accept(T,U)          T,U → void             │
+  │  Runnable            →  void run()                () → void              │
+  │  Callable<V>         →  V call()                  () → V (checked exc.)  │
+  │  Comparator<T>       →  int compare(T,T)          T,T → int              │
+  │                                                                           │
+  └───────────────────────────────────────────────────────────────────────────┘
