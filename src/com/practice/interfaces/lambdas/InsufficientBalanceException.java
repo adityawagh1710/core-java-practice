@@ -1,4 +1,4 @@
-package com.practice.lambdas;
+package com.practice.interfaces.lambdas;
 
 public class InsufficientBalanceException extends RuntimeException {
     public InsufficientBalanceException(String message) {

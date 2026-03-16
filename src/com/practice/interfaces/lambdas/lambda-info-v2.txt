@@ -1,0 +1,126 @@
+================================================================================
+          # Lambda Expressions in Java ☀️ (Java 8+)
+
+          Concise | Powerful | Functional-style programming in Java
+================================================================================
+
+## 1. What Are Lambda Expressions? 
+Introduced in Java 8 (2014)  
+A lambda expression is an **anonymous function** — a compact way to represent an instance of a **functional interface**.
+
+Core idea:  
+Instead of writing bulky anonymous inner classes → write short, expressive functions.
+
+================================================================================
+## 2. Basic Syntax
+
+(parameters) -> expression
+(parameters) -> { statements; }
+
+Examples:
+
+()                  -> System.out.println("Hello Lambda!")
+x                   -> x * x
+(int x, int y)      -> x + y
+(x, y)              -> { 
+                         System.out.println("x = " + x); 
+                         return x + y; 
+                       }
+
+================================================================================
+## 3. Functional Interfaces (Target Types)
+
+Interface with **exactly one abstract method** = Functional Interface  
+Can be annotated with @FunctionalInterface (optional but recommended)
+
+Built-in examples (java.util.function):
+
+Interface       | Abstract Method          | Typical Use
+----------------|--------------------------|-----------------------------
+Predicate<T>    | boolean test(T t)        | filter conditions
+Function<T,R>   | R apply(T t)             | transform / map
+Consumer<T>     | void accept(T t)         | forEach, side-effects
+Supplier<T>     | T get()                  | lazy generation
+BiFunction<T,U,R> | R apply(T t, U u)      | two arguments
+
+================================================================================
+## 4. Popular Real-world Examples
+
+### 4.1 Thread / Runnable
+// Old way
+new Thread(new Runnable() {
+    public void run() {
+        System.out.println("Old thread");
+    }
+}).start();
+
+// Lambda way ★
+new Thread(() -> System.out.println("Modern thread!")).start();
+
+### 4.2 List Sorting
+List<String> names = Arrays.asList("Zoe", "Anna", "Bob", "Charlie");
+
+// by length (ascending)
+names.sort((a, b) -> Integer.compare(a.length(), b.length()));
+
+// reverse alphabetical
+names.sort((a, b) -> b.compareTo(a));
+
+### 4.3 Stream API (most common use)
+List<Integer> numbers = Arrays.asList(1, 2, 3, 4, 5, 6, 7, 8);
+
+numbers.stream()
+       .filter(n -> n % 2 == 0)              // even numbers
+       .map(n -> n * n)                      // square
+       .forEach(System.out::println);        // 4 16 36 64
+
+================================================================================
+## 5. Method References (even shorter!)
+
+Kind                        Syntax                        Equivalent Lambda
+--------------------------- ----------------------------- --------------------------------
+Static method               Integer::parseInt             s -> Integer.parseInt(s)
+Instance method (object)    str::length                   () -> str.length()
+Instance method (type)      String::toUpperCase           s -> s.toUpperCase()
+Constructor                 ArrayList::new                () -> new ArrayList<>()
+
+Example:
+names.forEach(System.out::println);     // very clean!
+
+================================================================================
+## 6. Top 12 Interview Questions (Frequently Asked)
+
+1. What is a lambda expression? When was it introduced?
+2. What is a functional interface? Name 4 built-in ones.
+3. Difference between lambda and anonymous inner class?
+4. Can lambda have multiple statements? How?
+5. Explain method references. Show all 4 kinds with examples.
+6. What is "effectively final"? Why is it important for lambdas?
+7. Can lambdas throw checked exceptions? How to handle?
+8. Write a lambda expression to sort List<String> by string length descending.
+9. What happens if you try to use lambda with interface having 2 abstract methods?
+10. Can lambda capture variables from outer scope? Rules?
+11. Explain how lambdas are used with Stream API (filter + map + collect example).
+12. Why @FunctionalInterface annotation is useful (even though optional)?
+
+================================================================================
+## 7. Quick Cheat Sheet – Common Patterns
+
+Pattern                            Code Example
+---------------------------------- ------------------------------------------------
+Runnable                           () -> doSomething()
+Comparator                         (a,b) -> a.getAge() - b.getAge()
+Predicate                          x -> x > 18
+Function                           x -> x.toUpperCase()
+Consumer                           x -> System.out.println(x)
+Supplier                           () -> LocalDate.now()
+BiFunction                         (x,y) -> x + y
+Custom functional interface        @FunctionalInterface interface MathOp { int calc(int a, int b); }
+
+================================================================================
+Pro Tips
+• Prefer method references when possible — more readable
+• Keep lambdas small (1–3 lines ideal)
+• Avoid side-effects in map() — use forEach() for side-effects
+• Use effectively final variables — never modify captured locals
+================================================================================

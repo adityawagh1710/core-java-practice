@@ -1,0 +1,197 @@
+Optional Class in Java (Java 8+)
+
+What is Optional?
+
+Optional is a container object introduced in Java 8 in the java.util
+package. It is used to handle null values safely and avoid
+NullPointerException (NPE).
+
+Instead of returning null, a method can return an Optional object which
+may or may not contain a value.
+
+Definition: Optional is a wrapper class that can contain either a
+non-null value or empty.
+
+------------------------------------------------------------------------
+
+Import
+
+import java.util.Optional;
+
+------------------------------------------------------------------------
+
+Creating Optional Objects
+
+1.  Optional.of() Used when the value is definitely not null.
+
+Example: Optional name = Optional.of(“Aditya”);
+
+Note: If the value is null, it throws NullPointerException.
+
+------------------------------------------------------------------------
+
+2.  Optional.ofNullable() Used when value may be null.
+
+Example: String name = null; Optional optionalName =
+Optional.ofNullable(name);
+
+------------------------------------------------------------------------
+
+3.  Optional.empty()
+
+Creates an empty Optional.
+
+Example: Optional empty = Optional.empty();
+
+------------------------------------------------------------------------
+
+Checking Value
+
+isPresent()
+
+Example: Optional name = Optional.of(“Java”);
+
+if(name.isPresent()){ System.out.println(name.get()); }
+
+------------------------------------------------------------------------
+
+ifPresent()
+
+Example: Optional name = Optional.of(“Java”); name.ifPresent(n ->
+System.out.println(n));
+
+------------------------------------------------------------------------
+
+Getting Value
+
+get()
+
+Example: Optional name = Optional.of(“Java”); String value = name.get();
+
+Note: If empty → NoSuchElementException
+
+------------------------------------------------------------------------
+
+Providing Default Values
+
+orElse()
+
+Example: Optional name = Optional.ofNullable(null); String result =
+name.orElse(“Default Name”);
+
+------------------------------------------------------------------------
+
+orElseGet()
+
+Example: Optional name = Optional.ofNullable(null); String result =
+name.orElseGet(() -> “Generated Value”);
+
+------------------------------------------------------------------------
+
+orElseThrow()
+
+Example: Optional name = Optional.ofNullable(null); String value =
+name.orElseThrow(() -> new RuntimeException(“Value not present”));
+
+------------------------------------------------------------------------
+
+Practical Example
+
+class User {
+
+    String name;
+
+    User(String name){
+        this.name = name;
+    }
+
+    Optional<String> getName(){
+        return Optional.ofNullable(name);
+    }
+
+}
+
+public class OptionalExample {
+
+    public static void main(String[] args) {
+
+        User user = new User(null);
+
+        Optional<String> name = user.getName();
+
+        String result = name.orElse("Guest User");
+
+        System.out.println(result);
+    }
+
+}
+
+------------------------------------------------------------------------
+
+Common Optional Methods
+
+of() – Creates Optional with non-null value ofNullable() – Creates
+Optional with nullable value empty() – Returns empty Optional
+isPresent() – Checks if value exists get() – Returns value ifPresent() –
+Executes code if value exists orElse() – Returns default value
+orElseGet() – Returns generated default value orElseThrow() – Throws
+exception
+
+------------------------------------------------------------------------
+
+When to Use Optional
+
+Use Optional when: - Method may return null - API design should avoid
+NullPointerException - Functional programming style is used
+
+Example: Optional findUserById(int id)
+
+Instead of: User findUserById(int id) // may return null
+
+------------------------------------------------------------------------
+
+When NOT to Use Optional
+
+Avoid Optional: - In class fields - In method parameters - In
+serialization models
+
+Bad Example: class User{ Optional name; }
+
+Better: class User{ String name; }
+
+------------------------------------------------------------------------
+
+Optional vs Null
+
+Null - Risk of NullPointerException - Not explicit
+
+Optional - Safer - Forces handling of empty value - More readable
+
+------------------------------------------------------------------------
+
+Interview Questions
+
+1.  What is Optional in Java? Optional is a container class introduced
+    in Java 8 used to represent a value that may or may not be present.
+
+2.  In which package Optional class is located? java.util.Optional
+
+3.  Difference between of() and ofNullable()? of() does not accept null.
+    ofNullable() accepts null.
+
+4.  Difference between orElse() and orElseGet()? orElse() always
+    evaluates default value. orElseGet() evaluates supplier only if
+    needed.
+
+5.  What exception does get() throw if value is absent?
+    NoSuchElementException
+
+6.  Can Optional contain null? No. If value is null, Optional becomes
+    empty.
+
+7.  When should Optional be used? When a method may return null.
+
+------------------------------------------------------------------------
+
+Summary: Optional helps avoid NullPointerException, improves
+readability, and enforces proper null handling.

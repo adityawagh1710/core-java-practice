@@ -1,0 +1,146 @@
+Java Method References – Quick Notes & Interview Cheat Sheet
+============================================================
+
+Current date reference: March 2026
+
+What is a Method Reference?
+============================================================
+Method reference is a **shorthand syntax** for lambda expressions 
+that call an **existing method** by its name — instead of writing the full lambda body.
+
+Introduced in Java 8 — it makes code shorter and more readable 
+when the lambda is just calling another method.
+
+Main rule: 
+The method you reference must have the **same signature** (parameter types + return type)
+as the abstract method of the target functional interface.
+
+4 Types of Method References
+============================================================
+
+1. Static method reference
+   Syntax:   ClassName::staticMethod
+
+2. Instance method reference (of a particular object)
+   Syntax:   objectReference::instanceMethod
+
+3. Instance method reference (of an arbitrary object)
+   Syntax:   ClassName::instanceMethod
+
+4. Constructor reference
+   Syntax:   ClassName::new
+
+Real Examples – All 4 Types
+============================================================
+
+1. Static method reference
+   ────────────────────────
+   // Lambda
+   Function<String, Integer> len = s -> String.length(s);     // old style
+
+   // Method reference (better)
+   Function<String, Integer> len = String::length;
+
+   // Another common one
+   Consumer<String> printer = System.out::println;
+
+   // Math example
+   BinaryOperator<Double> power = Math::pow;
+
+
+2. Instance method of a specific object
+   ──────────────────────────────────────
+   String str = "Hello World";
+
+   // Lambda
+   Predicate<String> containsHello = s -> str.contains(s);
+
+   // Method reference
+   Predicate<String> containsHello = str::contains;
+
+   UnaryOperator<String> toUpper = str::toUpperCase;   // wrong – toUpperCase needs receiver
+
+
+3. Instance method of an arbitrary object (most powerful & common)
+   ────────────────────────────────────────────────────────────────
+   // Lambda
+   Function<String, Integer> strLen = s -> s.length();
+
+   // Method reference (cleaner)
+   Function<String, Integer> strLen = String::length;
+
+   // Sorting example
+   List<String> names = Arrays.asList("Zoe", "Anna", "Bob", "Charlie");
+   names.sort(String::compareToIgnoreCase);
+
+
+4. Constructor reference
+   ──────────────────────
+   // Lambda
+   Supplier<ArrayList<String>> listCreator = () -> new ArrayList<>();
+
+   // Constructor reference
+   Supplier<ArrayList<String>> listCreator = ArrayList::new;
+
+   // With parameters
+   Function<String, StringBuilder> sb = StringBuilder::new;
+
+   // BiFunction – two parameters
+   BiFunction<String, Integer, String> repeat = String::repeat;   // Java 11+
+
+
+Very Common Real-World Usages
+============================================================
+
+Comparator
+   people.sort(Comparator.comparing(Person::getAge));
+   people.sort(Comparator.comparing(Person::getName, String.CASE_INSENSITIVE_ORDER));
+
+Stream / Collection methods
+   names.forEach(System.out::println);
+   list.removeIf(String::isEmpty);
+   list.replaceAll(String::toUpperCase);
+
+Collectors
+   Map<Integer, List<Person>> byAge = people.stream()
+       .collect(Collectors.groupingBy(Person::getAge));
+
+Optional
+   Optional.ofNullable(user).map(User::getName).orElse("Guest");
+
+Optional or Supplier
+   User active = cache.getUser(id).orElseGet(User::newGuest);
+
+
+Interview Questions – Method References
+============================================================
+
+Easy
+1. What is a method reference in Java? When was it introduced?
+2. Name the four kinds of method references with syntax.
+3. Can method reference replace every lambda expression? (No)
+
+Medium
+4. What is the difference between Class::staticMethod and Class::instanceMethod ?
+5. Explain when you would use String::length vs str::toUpperCase
+6. How does constructor reference work with Supplier, Function, BiFunction?
+7. Can you use method reference with your own classes? Give example.
+
+Hard / Tricky
+8. Why does this compile?   list.forEach(String::toUpperCase);   // NO – does NOT compile
+   Why does this compile?   list.replaceAll(String::toUpperCase); // YES
+9. What happens if the method signature does not match the functional interface?
+10. Can method references throw checked exceptions? (Yes – if FI allows it)
+
+Quick Summary Table
+
+Type                        Syntax                     Example
+─────────────────────────── ────────────────────────── ────────────────────────────────
+Static                      Class::staticMethod        Math::max   Integer::parseInt
+Bound (specific object)     object::instanceMethod     str::equals   today::isBefore
+Unbound (arbitrary object)  Class::instanceMethod      String::length   String::trim
+Constructor                 Class::new                 ArrayList::new   StringBuilder::new
+
+Best Practice Tip:
+Prefer method references over lambdas when you are just calling an existing method — 
+it is usually more readable and tells the reader "this is a well-known operation".

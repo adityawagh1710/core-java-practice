@@ -1,0 +1,462 @@
+================================================================================
+                     JAVA LAMBDA EXPRESSIONS - COMPLETE NOTES
+                              Java 8+ | Java 21 Context
+================================================================================
+
+------------------------------------------------------------------------
+1. WHAT IS A LAMBDA EXPRESSION?
+------------------------------------------------------------------------
+
+A Lambda expression is a short block of code that:
+  - Takes in parameters (optional)
+  - Returns a value (optional)
+  - Has NO name (anonymous function)
+  - Can be passed around as if it were an object
+
+Think of it as a concise way to represent a method (behavior) without
+writing a full class or anonymous inner class.
+
+Syntax:
+  (parameters) -> expression
+  (parameters) -> { statements; }
+
+------------------------------------------------------------------------
+2. WHY LAMBDA EXPRESSIONS?
+------------------------------------------------------------------------
+
+Before Java 8, to pass behavior you had to use:
+  - Anonymous inner classes (verbose, cluttered)
+  - Separate class implementations
+
+Lambdas solve this by:
+  - Reducing boilerplate code
+  - Making code more readable and concise
+  - Enabling functional-style programming in Java
+  - Allowing behavior to be passed as a method argument
+
+------------------------------------------------------------------------
+3. FUNCTIONAL INTERFACE (KEY CONCEPT)
+------------------------------------------------------------------------
+
+A Lambda can ONLY be used where a Functional Interface is expected.
+
+A Functional Interface is an interface with EXACTLY ONE abstract method.
+It can have multiple default or static methods.
+
+Annotation: @FunctionalInterface (optional but recommended)
+
+Example:
+  @FunctionalInterface
+  interface Greeting {
+      void sayHello(String name);  // single abstract method
+  }
+
+Built-in Functional Interfaces (java.util.function package):
+  +-----------------+---------------------------+---------------------------+
+  | Interface       | Method Signature          | Use Case                  |
+  +-----------------+---------------------------+---------------------------+
+  | Runnable        | void run()                | No input, no output       |
+  | Consumer<T>     | void accept(T t)          | Takes input, no return    |
+  | Supplier<T>     | T get()                   | No input, returns value   |
+  | Function<T,R>   | R apply(T t)              | Takes input, returns value|
+  | Predicate<T>    | boolean test(T t)         | Takes input, returns bool |
+  | BiFunction<T,U,R>| R apply(T t, U u)        | Two inputs, one output    |
+  | UnaryOperator<T>| T apply(T t)              | Same type in and out      |
+  | BinaryOperator<T>| T apply(T t1, T t2)      | Two same-type inputs      |
+  +-----------------+---------------------------+---------------------------+
+
+------------------------------------------------------------------------
+4. LAMBDA SYNTAX VARIATIONS
+------------------------------------------------------------------------
+
+// No parameters
+() -> System.out.println("Hello!")
+
+// One parameter (parentheses optional)
+name -> System.out.println("Hello " + name)
+(name) -> System.out.println("Hello " + name)
+
+// Multiple parameters
+(a, b) -> a + b
+
+// With explicit types
+(int a, int b) -> a + b
+
+// Multi-line body (requires curly braces and return)
+(a, b) -> {
+    int sum = a + b;
+    return sum;
+}
+
+// Returns value (single expression, no 'return' keyword needed)
+(a, b) -> a + b
+
+------------------------------------------------------------------------
+5. EXAMPLES
+------------------------------------------------------------------------
+
+--- Example 1: Runnable (no input, no output) ---
+
+  // Old way - Anonymous inner class
+  Runnable r1 = new Runnable() {
+      @Override
+      public void run() {
+          System.out.println("Running...");
+      }
+  };
+
+  // New way - Lambda
+  Runnable r2 = () -> System.out.println("Running...");
+
+  r2.run(); // Output: Running...
+
+
+--- Example 2: Comparator (sorting) ---
+
+  List<String> names = Arrays.asList("Charlie", "Alice", "Bob");
+
+  // Old way
+  Collections.sort(names, new Comparator<String>() {
+      @Override
+      public int compare(String a, String b) {
+          return a.compareTo(b);
+      }
+  });
+
+  // Lambda way
+  Collections.sort(names, (a, b) -> a.compareTo(b));
+
+  // Or even shorter with method reference
+  names.sort(String::compareTo);
+
+  System.out.println(names); // [Alice, Bob, Charlie]
+
+
+--- Example 3: Predicate (filter logic) ---
+
+  Predicate<Integer> isEven = n -> n % 2 == 0;
+
+  System.out.println(isEven.test(4));  // true
+  System.out.println(isEven.test(7));  // false
+
+  // Composing predicates
+  Predicate<Integer> isPositive = n -> n > 0;
+  Predicate<Integer> isEvenAndPositive = isEven.and(isPositive);
+
+  System.out.println(isEvenAndPositive.test(4));   // true
+  System.out.println(isEvenAndPositive.test(-4));  // false
+
+
+--- Example 4: Function (transform input to output) ---
+
+  Function<String, Integer> strLength = s -> s.length();
+
+  System.out.println(strLength.apply("Hello")); // 5
+
+  // Chaining with andThen()
+  Function<Integer, String> intToStr = i -> "Length: " + i;
+  Function<String, String> combined = strLength.andThen(intToStr);
+
+  System.out.println(combined.apply("Java")); // Length: 4
+
+
+--- Example 5: Consumer (use input, return nothing) ---
+
+  Consumer<String> printer = s -> System.out.println(">> " + s);
+  printer.accept("Lambda is cool"); // >> Lambda is cool
+
+  // With forEach
+  List<String> items = List.of("A", "B", "C");
+  items.forEach(item -> System.out.println(item));
+
+
+--- Example 6: Supplier (no input, produces output) ---
+
+  Supplier<Double> randomValue = () -> Math.random();
+  System.out.println(randomValue.get()); // e.g. 0.7342...
+
+  Supplier<String> greeting = () -> "Hello, World!";
+  System.out.println(greeting.get()); // Hello, World!
+
+
+--- Example 7: Custom Functional Interface ---
+
+  @FunctionalInterface
+  interface MathOperation {
+      int operate(int a, int b);
+  }
+
+  MathOperation add      = (a, b) -> a + b;
+  MathOperation subtract = (a, b) -> a - b;
+  MathOperation multiply = (a, b) -> a * b;
+
+  System.out.println(add.operate(5, 3));      // 8
+  System.out.println(subtract.operate(5, 3)); // 2
+  System.out.println(multiply.operate(5, 3)); // 15
+
+
+--- Example 8: Lambda with Streams ---
+
+  List<Integer> numbers = Arrays.asList(1, 2, 3, 4, 5, 6, 7, 8, 9, 10);
+
+  // Filter even numbers, square them, collect to list
+  List<Integer> result = numbers.stream()
+      .filter(n -> n % 2 == 0)         // Lambda as Predicate
+      .map(n -> n * n)                  // Lambda as Function
+      .collect(Collectors.toList());
+
+  System.out.println(result); // [4, 16, 36, 64, 100]
+
+
+--- Example 9: Effectively Final Variables ---
+
+  // Lambda can capture local variables, but they must be
+  // effectively final (not modified after assignment)
+
+  String prefix = "Hello";  // effectively final
+
+  Consumer<String> greeter = name -> System.out.println(prefix + " " + name);
+  greeter.accept("Aditya"); // Hello Aditya
+
+  // prefix = "Hi";  // ERROR! Cannot reassign after lambda captures it
+
+
+--- Example 10: Method Reference (shorthand for lambdas) ---
+
+  // Lambda                     →  Method Reference
+  s -> System.out.println(s)    →  System.out::println
+  s -> s.toUpperCase()          →  String::toUpperCase
+  () -> new ArrayList<>()       →  ArrayList::new
+
+  List<String> names = List.of("alice", "bob");
+  names.forEach(System.out::println); // alice \n bob
+
+------------------------------------------------------------------------
+6. VARIABLE CAPTURE RULES
+------------------------------------------------------------------------
+
+Lambdas can access:
+  ✔ Local variables   — must be effectively final (not reassigned)
+  ✔ Instance fields   — through enclosing object's 'this'
+  ✔ Static fields     — always accessible
+
+What "effectively final" means:
+  - You never reassign the variable after it's first assigned
+  - Java infers this automatically (no 'final' keyword required)
+
+------------------------------------------------------------------------
+7. LAMBDA vs ANONYMOUS INNER CLASS
+------------------------------------------------------------------------
+
+  +------------------------+------------------+-------------------------+
+  | Feature                | Anonymous Class  | Lambda                  |
+  +------------------------+------------------+-------------------------+
+  | Verbosity              | High             | Low                     |
+  | 'this' refers to       | Anonymous class  | Enclosing class         |
+  | Can have state         | Yes              | No (stateless)          |
+  | Requires interface     | Any interface    | Functional interface    |
+  | Serializable           | Yes              | Yes (if interface is)   |
+  | Performance            | Slightly slower  | Slightly faster         |
+  +------------------------+------------------+-------------------------+
+
+------------------------------------------------------------------------
+8. COMMON MISTAKES
+------------------------------------------------------------------------
+
+  ❌ Trying to use on a non-functional interface
+     (interface with more than one abstract method)
+
+  ❌ Modifying a captured local variable inside lambda
+     int count = 0;
+     list.forEach(e -> count++); // COMPILE ERROR
+
+  ❌ Expecting lambda to always improve readability
+     (complex multi-line lambdas are harder to read — extract to method)
+
+  ❌ Confusing lambda body expression vs block
+     n -> n * 2          // expression — no return, no braces
+     n -> { return n*2;} // block — needs explicit return + braces
+
+------------------------------------------------------------------------
+9. QUICK REFERENCE CHEAT SHEET
+------------------------------------------------------------------------
+
+  () -> "Hello"                        Supplier<String>
+  x -> x * 2                           UnaryOperator<Integer> / Function
+  (x, y) -> x + y                      BinaryOperator / BiFunction
+  x -> x > 0                           Predicate<Integer>
+  x -> System.out.println(x)           Consumer<T>
+  () -> new SomeClass()                 Supplier<SomeClass>
+
+================================================================================
+                         INTERVIEW QUESTIONS & ANSWERS
+================================================================================
+
+------------------------------------------------------------------------
+Q1. What is a Lambda expression in Java?
+------------------------------------------------------------------------
+A Lambda expression is an anonymous function introduced in Java 8.
+It allows you to write a concise implementation of a functional interface
+without creating a class. It has the syntax: (params) -> body.
+
+------------------------------------------------------------------------
+Q2. What is a Functional Interface?
+------------------------------------------------------------------------
+A Functional Interface is an interface with exactly ONE abstract method.
+It may have multiple default or static methods. Lambdas can only be
+assigned to functional interfaces. The @FunctionalInterface annotation
+is used to enforce this (optional but recommended).
+
+Example: Runnable, Comparator, Predicate, Function, Consumer, Supplier.
+
+------------------------------------------------------------------------
+Q3. Can a lambda expression be used with any interface?
+------------------------------------------------------------------------
+No. A lambda can ONLY be used with a Functional Interface (one with
+exactly one abstract method). Attempting to use it with a regular
+multi-method interface causes a compile-time error.
+
+------------------------------------------------------------------------
+Q4. What does "effectively final" mean in the context of lambdas?
+------------------------------------------------------------------------
+A local variable is "effectively final" if its value is never changed
+after its initial assignment — even without the 'final' keyword.
+Lambdas can only capture local variables that are effectively final.
+This ensures thread safety and predictable behavior.
+
+------------------------------------------------------------------------
+Q5. What is the difference between 'this' in a lambda vs an
+    anonymous inner class?
+------------------------------------------------------------------------
+In an anonymous inner class, 'this' refers to the anonymous class itself.
+In a lambda, 'this' refers to the enclosing (outer) class instance.
+This is because a lambda is NOT a new class — it's just a behavior block.
+
+------------------------------------------------------------------------
+Q6. What is a method reference? How does it relate to lambdas?
+------------------------------------------------------------------------
+A method reference is a shorthand notation for a lambda that calls a
+single existing method. Types:
+  - Static method:     ClassName::staticMethod
+  - Instance method:   instance::method  or  ClassName::instanceMethod
+  - Constructor:       ClassName::new
+
+Example:
+  Lambda:           s -> System.out.println(s)
+  Method Ref:       System.out::println
+
+------------------------------------------------------------------------
+Q7. Can lambdas throw checked exceptions?
+------------------------------------------------------------------------
+Yes, but only if the functional interface's abstract method declares
+the checked exception in its throws clause.
+
+Example:
+  @FunctionalInterface
+  interface ThrowingSupplier<T> {
+      T get() throws Exception;
+  }
+
+  ThrowingSupplier<String> ts = () -> { throw new Exception("oops"); };
+
+If the functional interface doesn't declare the exception, you must
+handle it inside the lambda with try-catch.
+
+------------------------------------------------------------------------
+Q8. What are the built-in functional interfaces in java.util.function?
+------------------------------------------------------------------------
+Key ones to know:
+  - Predicate<T>     : boolean test(T t)          — filtering
+  - Function<T,R>    : R apply(T t)               — transformation
+  - Consumer<T>      : void accept(T t)           — side effect
+  - Supplier<T>      : T get()                    — provides value
+  - BiFunction<T,U,R>: R apply(T t, U u)          — two inputs
+  - UnaryOperator<T> : T apply(T t)               — same type
+  - BinaryOperator<T>: T apply(T t1, T t2)        — two same-type inputs
+
+------------------------------------------------------------------------
+Q9. How do lambdas improve performance compared to anonymous classes?
+------------------------------------------------------------------------
+Lambdas are implemented using invokedynamic (JVM bytecode instruction)
+which is lazily resolved. This avoids creating extra .class files at
+compile time and reduces memory overhead. Anonymous classes generate a
+new class file per usage, which is heavier. However, in most business
+logic, the performance difference is negligible.
+
+------------------------------------------------------------------------
+Q10. Can you store a lambda in a variable and pass it around?
+------------------------------------------------------------------------
+Yes. A lambda is stored as the type of its functional interface.
+
+  Predicate<String> isEmpty = s -> s.isEmpty();
+  System.out.println(isEmpty.test(""));     // true
+  System.out.println(isEmpty.test("Java")); // false
+
+You can also pass it as a method argument:
+  public static void process(List<String> list, Predicate<String> filter) {
+      list.stream().filter(filter).forEach(System.out::println);
+  }
+  process(names, s -> s.startsWith("A"));
+
+------------------------------------------------------------------------
+Q11. What is the difference between Predicate.and(), or(), negate()?
+------------------------------------------------------------------------
+These are default methods in Predicate<T> for composing predicates:
+
+  Predicate<Integer> isEven    = n -> n % 2 == 0;
+  Predicate<Integer> isPositive = n -> n > 0;
+
+  isEven.and(isPositive).test(4)   // true  — both must be true
+  isEven.or(isPositive).test(3)    // true  — at least one true
+  isEven.negate().test(3)          // true  — inverts the result
+
+------------------------------------------------------------------------
+Q12. Write a lambda to sort a list of strings by length.
+------------------------------------------------------------------------
+  List<String> words = Arrays.asList("banana", "apple", "fig", "kiwi");
+  words.sort((a, b) -> a.length() - b.length());
+  System.out.println(words); // [fig, kiwi, apple, banana]
+
+  // Or with Comparator.comparingInt:
+  words.sort(Comparator.comparingInt(String::length));
+
+------------------------------------------------------------------------
+Q13. Can lambdas replace all anonymous classes?
+------------------------------------------------------------------------
+No. Lambdas can only replace anonymous classes that implement a
+Functional Interface (single abstract method). If the interface has
+multiple abstract methods, or you need the anonymous class to maintain
+state or extend an abstract class, you still need an anonymous class.
+
+------------------------------------------------------------------------
+Q14. What happens if you try to modify a captured variable inside a lambda?
+------------------------------------------------------------------------
+It causes a compile-time error: "Local variable X defined in an enclosing
+scope must be final or effectively final."
+
+  int count = 0;
+  list.forEach(e -> count++); // COMPILE ERROR
+
+To work around this, use an array or AtomicInteger:
+  int[] count = {0};
+  list.forEach(e -> count[0]++);
+
+  AtomicInteger count = new AtomicInteger(0);
+  list.forEach(e -> count.incrementAndGet());
+
+------------------------------------------------------------------------
+Q15. What is the difference between Function.compose() and andThen()?
+------------------------------------------------------------------------
+Both chain two functions. The difference is execution order:
+
+  f.andThen(g)  → applies f first, then g  → g(f(x))
+  f.compose(g)  → applies g first, then f  → f(g(x))
+
+Example:
+  Function<Integer, Integer> times2  = x -> x * 2;
+  Function<Integer, Integer> plus3   = x -> x + 3;
+
+  times2.andThen(plus3).apply(5)  // (5*2)+3 = 13
+  times2.compose(plus3).apply(5)  // (5+3)*2 = 16
+
+================================================================================

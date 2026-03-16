@@ -1,0 +1,389 @@
+========================================================
+JAVA LAMBDA EXPRESSIONS - COMPLETE NOTES
+========================================================
+
+1. What is a Lambda Expression?
+--------------------------------------------------------
+A Lambda Expression is a short and concise way to implement
+a functional interface (an interface with only one abstract method).
+
+It allows you to write anonymous functions in Java.
+
+Introduced in: Java 8
+
+Lambda expression replaces the need for:
+- Anonymous classes
+- Verbose method implementations
+
+Syntax:
+
+(parameters) -> { body }
+
+Examples:
+
+() -> System.out.println("Hello")
+
+(x) -> x * x
+
+(a, b) -> a + b
+
+
+--------------------------------------------------------
+2. Why Lambda Expressions?
+--------------------------------------------------------
+
+Before Java 8, implementing interfaces required a lot of boilerplate code.
+
+Example (Before Lambda):
+
+Runnable r = new Runnable() {
+    public void run() {
+        System.out.println("Running thread");
+    }
+};
+
+With Lambda:
+
+Runnable r = () -> System.out.println("Running thread");
+
+
+Advantages:
+
+- Less code
+- More readable
+- Functional programming style
+- Used heavily with Stream API
+
+
+--------------------------------------------------------
+3. Lambda Expression Syntax
+--------------------------------------------------------
+
+General form:
+
+(parameter list) -> { body }
+
+
+Case 1: No parameters
+
+() -> System.out.println("Hello")
+
+
+Case 2: One parameter
+
+(x) -> System.out.println(x)
+
+
+Case 3: Multiple parameters
+
+(a, b) -> System.out.println(a + b)
+
+
+Case 4: Returning value
+
+(a, b) -> a + b
+
+
+--------------------------------------------------------
+4. Functional Interface
+--------------------------------------------------------
+
+A Functional Interface contains only ONE abstract method.
+
+Lambda expressions can only be used with functional interfaces.
+
+Examples:
+
+Runnable
+Callable
+Comparator
+Predicate
+Function
+Consumer
+Supplier
+
+
+Example:
+
+interface Calculator {
+    int add(int a, int b);
+}
+
+Calculator c = (a, b) -> a + b;
+
+System.out.println(c.add(5,3));
+
+
+--------------------------------------------------------
+5. Example 1: Lambda with Runnable
+--------------------------------------------------------
+
+public class LambdaExample1 {
+
+    public static void main(String[] args) {
+
+        Runnable r = () -> {
+            System.out.println("Thread running using Lambda");
+        };
+
+        new Thread(r).start();
+    }
+}
+
+
+--------------------------------------------------------
+6. Example 2: Lambda with Custom Functional Interface
+--------------------------------------------------------
+
+interface MathOperation {
+    int operate(int a, int b);
+}
+
+public class LambdaExample2 {
+
+    public static void main(String[] args) {
+
+        MathOperation add = (a, b) -> a + b;
+        MathOperation multiply = (a, b) -> a * b;
+
+        System.out.println("Addition: " + add.operate(5,3));
+        System.out.println("Multiplication: " + multiply.operate(5,3));
+    }
+}
+
+
+--------------------------------------------------------
+7. Example 3: Lambda with Comparator
+--------------------------------------------------------
+
+import java.util.*;
+
+public class LambdaExample3 {
+
+    public static void main(String[] args) {
+
+        List<Integer> list = Arrays.asList(5,3,9,1);
+
+        list.sort((a,b) -> a - b);
+
+        System.out.println(list);
+    }
+}
+
+
+--------------------------------------------------------
+8. Example 4: Lambda with Predicate
+--------------------------------------------------------
+
+import java.util.function.Predicate;
+
+public class LambdaExample4 {
+
+    public static void main(String[] args) {
+
+        Predicate<Integer> isEven = (n) -> n % 2 == 0;
+
+        System.out.println(isEven.test(10));
+        System.out.println(isEven.test(7));
+    }
+}
+
+
+--------------------------------------------------------
+9. Example 5: Lambda with Consumer
+--------------------------------------------------------
+
+import java.util.function.Consumer;
+
+public class LambdaExample5 {
+
+    public static void main(String[] args) {
+
+        Consumer<String> printer = (s) -> System.out.println(s);
+
+        printer.accept("Hello Lambda");
+    }
+}
+
+
+--------------------------------------------------------
+10. Lambda vs Anonymous Class
+--------------------------------------------------------
+
+Anonymous Class:
+
+Runnable r = new Runnable() {
+    public void run() {
+        System.out.println("Hello");
+    }
+};
+
+Lambda Expression:
+
+Runnable r = () -> System.out.println("Hello");
+
+
+Differences:
+
+Lambda:
+- Less code
+- Functional programming
+- Only for functional interfaces
+
+Anonymous class:
+- More flexible
+- Can define multiple methods
+- More verbose
+
+
+--------------------------------------------------------
+11. Rules for Lambda Expressions
+--------------------------------------------------------
+
+1. Works only with Functional Interfaces
+2. Parameter type can be inferred
+3. Parentheses optional for single parameter
+4. Curly braces optional for single statement
+5. Return keyword optional for single expression
+
+
+Example:
+
+(a,b) -> a + b
+
+
+--------------------------------------------------------
+12. Real Life Example (Sorting Employees)
+--------------------------------------------------------
+
+import java.util.*;
+
+class Employee {
+
+    int id;
+    String name;
+
+    Employee(int id, String name){
+        this.id = id;
+        this.name = name;
+    }
+}
+
+public class LambdaEmployeeSort {
+
+    public static void main(String[] args) {
+
+        List<Employee> list = new ArrayList<>();
+
+        list.add(new Employee(3,"John"));
+        list.add(new Employee(1,"Alex"));
+        list.add(new Employee(2,"David"));
+
+        list.sort((e1,e2) -> e1.id - e2.id);
+
+        for(Employee e : list){
+            System.out.println(e.id + " " + e.name);
+        }
+    }
+}
+
+
+========================================================
+INTERVIEW QUESTIONS
+========================================================
+
+
+Q1: What is Lambda Expression?
+
+A Lambda Expression is a concise way to implement a functional
+interface using an anonymous function.
+
+
+--------------------------------------------------------
+
+Q2: When were Lambda Expressions introduced?
+
+Java 8
+
+
+--------------------------------------------------------
+
+Q3: What interface is required for Lambda Expressions?
+
+Functional Interface
+
+
+--------------------------------------------------------
+
+Q4: What is a Functional Interface?
+
+An interface with exactly one abstract method.
+
+
+Example:
+
+interface Test {
+    void show();
+}
+
+
+--------------------------------------------------------
+
+Q5: Can a functional interface have multiple methods?
+
+Yes.
+
+But only ONE abstract method.
+It can also contain:
+
+- default methods
+- static methods
+
+
+--------------------------------------------------------
+
+Q6: Can Lambda replace anonymous classes?
+
+Yes, when implementing functional interfaces.
+
+
+--------------------------------------------------------
+
+Q7: What is the syntax of Lambda?
+
+(parameters) -> { body }
+
+
+--------------------------------------------------------
+
+Q8: Can Lambda expressions access outer variables?
+
+Yes, but they must be:
+
+final or effectively final
+
+
+--------------------------------------------------------
+
+Q9: What packages contain built-in functional interfaces?
+
+java.util.function
+
+
+Examples:
+
+Predicate
+Function
+Consumer
+Supplier
+
+
+--------------------------------------------------------
+
+Q10: Where are Lambda Expressions used most?
+
+- Stream API
+- Collections sorting
+- Event handling
+- Multithreading
+- Functional programming

@@ -1,4 +1,4 @@
-package com.practice.interfaces;
+package com.practice.interfaces.userdefined;
 
 public class App {
 

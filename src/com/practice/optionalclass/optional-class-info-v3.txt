@@ -1,0 +1,280 @@
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+1. WHAT IS Optional<T>?
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+- Introduced in Java 8, lives in the java.util package.
+- A container object that may or may not hold a non-null value.
+- Designed to make "absence of value" explicit and type-safe.
+- Best used as a RETURN TYPE for methods where no result is a valid outcome.
+
+WHY WAS IT INTRODUCED?
+  - Before Optional, null was returned to mean "no value".
+  - Callers often forgot null checks → NullPointerException (NPE).
+  - null has no meaning — it doesn't say WHY there's no value.
+  - Optional makes the contract clear: "this method might not return a value."
+
+NOTE: Optional is NOT meant to replace every use of null.
+      Do NOT use it for method parameters or class fields.
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+2. CREATING AN OPTIONAL — 3 FACTORY METHODS
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+1) Optional.empty()
+   - Creates an Optional with no value.
+   - Example:
+       Optional<String> empty = Optional.empty();
+
+2) Optional.of(value)
+   - Creates an Optional with a NON-NULL value.
+   - Throws NullPointerException if null is passed!
+   - Example:
+       Optional<String> opt = Optional.of("Hello");   // OK
+       Optional<String> bad = Optional.of(null);      // NPE thrown!
+
+3) Optional.ofNullable(value)
+   - Safe version. Accepts null → returns Optional.empty().
+   - Example:
+       Optional<String> opt1 = Optional.ofNullable("Hello"); // Optional[Hello]
+       Optional<String> opt2 = Optional.ofNullable(null);    // Optional.empty
+
+RULE OF THUMB:
+  - Use ofNullable() when value might be null (from DB, user input, etc.)
+  - Use of() only when you are 100% sure the value is non-null.
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+3. KEY METHODS OF Optional
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+METHOD                  DESCRIPTION
+----------------------  --------------------------------------------------------
+isPresent()             Returns true if value is present, false if empty.
+isEmpty()               Returns true if no value present. (Java 11+)
+get()                   Returns value if present; throws NoSuchElementException
+                        if empty. AVOID using this directly.
+orElse(T other)         Returns value if present, else returns the given default.
+orElseGet(Supplier)     Returns value if present, else calls Supplier (LAZY).
+orElseThrow()           Returns value or throws NoSuchElementException.
+orElseThrow(Supplier)   Returns value or throws exception from Supplier.
+ifPresent(Consumer)     Runs Consumer if value is present; does nothing if empty.
+map(Function)           Transforms value and wraps result in Optional.
+flatMap(Function)       Like map() but avoids Optional<Optional<T>> nesting.
+filter(Predicate)       Returns Optional if value matches condition, else empty.
+or(Supplier)            If empty, returns Optional from Supplier. (Java 9+)
+stream()                Returns a Stream of 0 or 1 element. (Java 9+)
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+4. CODE EXAMPLES
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+--- isPresent() and get() ---
+
+    Optional<String> opt = Optional.of("Java");
+    if (opt.isPresent()) {
+        System.out.println(opt.get());  // Java
+    }
+
+
+--- orElse() vs orElseGet() ---
+
+    // orElse: always evaluates the default, even if value IS present
+    String r1 = Optional.<String>empty().orElse("default");       // "default"
+
+    // orElseGet: lazy — only calls Supplier when Optional is empty
+    String r2 = Optional.<String>empty().orElseGet(() -> "default"); // "default"
+
+    // PREFER orElseGet() for expensive defaults (e.g. DB calls)
+
+
+--- ifPresent() ---
+
+    Optional<String> name = Optional.of("Aditya");
+    name.ifPresent(n -> System.out.println("Hello, " + n)); // Hello, Aditya
+
+    Optional<String> empty = Optional.empty();
+    empty.ifPresent(n -> System.out.println(n));            // does nothing
+
+
+--- map() ---
+
+    Optional<String> name = Optional.of("aditya");
+    Optional<String> upper = name.map(String::toUpperCase);
+    System.out.println(upper);  // Optional[ADITYA]
+
+    Optional<String> empty = Optional.empty();
+    System.out.println(empty.map(String::toUpperCase)); // Optional.empty
+
+
+--- flatMap() ---
+
+    // Use flatMap when the mapping function itself returns an Optional.
+    // map() would give Optional<Optional<T>> — flatMap() flattens it.
+
+    Optional<String> name = Optional.of("  Aditya  ");
+    Optional<String> trimmed = name.flatMap(s -> {
+        String t = s.trim();
+        return t.isEmpty() ? Optional.empty() : Optional.of(t);
+    });
+    System.out.println(trimmed);  // Optional[Aditya]
+
+
+--- filter() ---
+
+    Optional<Integer> age = Optional.of(25);
+    System.out.println(age.filter(a -> a >= 18)); // Optional[25]
+    System.out.println(age.filter(a -> a < 10));  // Optional.empty
+
+
+--- orElseThrow() ---
+
+    Optional<String> empty = Optional.empty();
+    String value = empty.orElseThrow(
+        () -> new IllegalArgumentException("Value not found")
+    );
+    // throws IllegalArgumentException: Value not found
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+5. REAL-WORLD USAGE PATTERN
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+    // Repository
+    public Optional<User> findById(int id) { ... }
+
+    // Service layer — clean chaining
+    public String getUserName(int id) {
+        return userRepository
+            .findById(id)
+            .map(User::getName)
+            .map(String::toUpperCase)
+            .orElse("Guest");
+    }
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+6. BEST PRACTICES & COMMON MISTAKES
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+DO USE Optional for:
+  - Return types where absence of a value is valid and expected.
+  - Chaining operations using map(), filter(), flatMap().
+  - Replacing null-return patterns in service/API layers.
+
+DON'T USE Optional for:
+  - Method/constructor parameters.
+  - Class/instance fields.
+  - Collections — return empty list/set instead of Optional<List<T>>.
+  - Performance-critical code (has boxing overhead).
+
+ANTI-PATTERN 1: get() without check
+  BAD:  String s = Optional.ofNullable(getValue()).get();
+  GOOD: String s = Optional.ofNullable(getValue()).orElse("fallback");
+
+ANTI-PATTERN 2: isPresent() + get() combo
+  BAD:
+    if (opt.isPresent()) {
+        System.out.println(opt.get());
+    }
+
+  GOOD:
+    opt.ifPresent(System.out::println);
+
+
+================================================================================
+                        INTERVIEW QUESTIONS & ANSWERS
+================================================================================
+
+
+Q1. What is Optional in Java and why was it introduced?
+------------------------------------------------------------
+A: Optional<T> is a container class in java.util (Java 8+) that may or may not
+   hold a non-null value. It was introduced to avoid NullPointerExceptions by
+   making the absence of a value explicit and type-safe, replacing the common
+   anti-pattern of returning null from methods.
+
+
+Q2. What is the difference between Optional.of() and Optional.ofNullable()?
+------------------------------------------------------------
+A: Optional.of(value) creates an Optional with a guaranteed non-null value and
+   throws NullPointerException if null is passed.
+   Optional.ofNullable(value) safely accepts null and returns Optional.empty()
+   in that case. Use ofNullable() when the value might be null.
+
+
+Q3. What is the difference between orElse() and orElseGet()?
+------------------------------------------------------------
+A: orElse(T) always evaluates the default expression eagerly, even if the
+   Optional has a value. orElseGet(Supplier) is lazy — it only invokes the
+   Supplier when the Optional is empty. For expensive defaults (e.g. DB calls),
+   prefer orElseGet() to avoid unnecessary computation.
+
+
+Q4. What is the difference between map() and flatMap() in Optional?
+------------------------------------------------------------
+A: map() applies a function to the value and wraps the result in a new Optional.
+   flatMap() is used when the mapping function itself returns an Optional,
+   to avoid Optional<Optional<T>> nesting — it flattens the result into a
+   single Optional.
+
+
+Q5. Why should you avoid using get() directly on an Optional?
+------------------------------------------------------------
+A: get() throws NoSuchElementException if the Optional is empty. It defeats the
+   purpose of Optional. Instead, use orElse(), orElseGet(), orElseThrow(), or
+   ifPresent() which handle the empty case gracefully.
+
+
+Q6. Should Optional be used as a method parameter or class field?
+------------------------------------------------------------
+A: No. Using Optional as a method parameter forces callers to wrap values
+   unnecessarily. As a field, it adds overhead and breaks serialization.
+   Optional is designed specifically as a return type for methods where
+   the absence of a value is a valid outcome.
+
+
+Q7. What does filter() do in Optional?
+------------------------------------------------------------
+A: filter(Predicate) tests the value inside an Optional against a condition.
+   If the value is present and matches the predicate, it returns the same
+   Optional. If absent or not matching, it returns Optional.empty().
+
+
+Q8. What is the difference between ifPresent() and isPresent()?
+------------------------------------------------------------
+A: isPresent() returns a boolean indicating whether a value is present.
+   ifPresent(Consumer) executes a lambda only if the value is present —
+   it's the cleaner functional alternative to the isPresent() + get() pattern.
+
+
+Q9. What does isEmpty() do and when was it added?
+------------------------------------------------------------
+A: isEmpty() returns true if the Optional holds no value. It is the logical
+   negation of isPresent(). It was introduced in Java 11.
+
+
+Q10. How does Optional.stream() work? (Java 9+)
+------------------------------------------------------------
+A: stream() converts an Optional into a Stream of 0 or 1 element. If the
+   Optional has a value, the stream contains that element. If empty, the stream
+   is empty. Useful for integrating Optional into stream pipelines.
+
+
+Q11. What is the or() method in Optional? (Java 9+)
+------------------------------------------------------------
+A: or(Supplier<Optional<T>>) returns the same Optional if a value is present,
+   otherwise returns the Optional provided by the Supplier. It chains alternative
+   Optional sources — unlike orElseGet() which returns a plain value.
+
+
+Q12. Can you use Optional with collections (e.g. Optional<List<T>>)?
+------------------------------------------------------------
+A: This is discouraged. If a method returns a collection, return an empty
+   collection (e.g. Collections.emptyList()) rather than Optional<List<T>>.
+   Optional is for scalar values where absence is meaningful, not for wrapping
+   collections.
+
+
+================================================================================

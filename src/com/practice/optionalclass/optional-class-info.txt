@@ -1,0 +1,82 @@
+Java Optional<T> Cheat Sheet & Interview Notes
+============================================================
+Last updated: 2026
+
+What is it
+============================================================
+• Container that may hold a value or be empty
+• Introduced in Java 8 (java.util.Optional)
+• Goal: make absence of value explicit → reduce NPEs
+• NOT a general null replacement — mainly for return types
+
+Creation (3 main ways)
+============================================================
+Optional<String> a = Optional.empty();                // explicitly empty
+Optional<String> b = Optional.of("value");            // null → NPE
+Optional<String> c = Optional.ofNullable(getName());  // null → empty
+
+Core methods
+============================================================
+get()                    → value or NoSuchElementException
+isPresent() / isEmpty()  → boolean
+orElse(T default)        → value or default (evaluates always)
+orElseGet(Supplier)      → value or compute default (lazy!)
+orElseThrow()            → value or NoSuchElementException
+orElseThrow(Supplier)    → value or custom exception
+
+Functional style (most loved)
+============================================================
+map(Function)            → Optional<U> (empty stays empty)
+flatMap(Function<..., Optional<U>>) 
+filter(Predicate) 
+ifPresent(Consumer) 
+stream()                 → Stream (0 or 1 element) since Java 9
+
+Classic patterns
+============================================================
+String email = optUser
+    .map(User::getProfile)
+    .map(Profile::getEmail)
+    .orElse("no-email@example.com");
+
+User active = repository.findById(id)
+    .orElseThrow(() -> new NotFoundException("User " + id + " not found"));
+
+String name = optUser.orElseGet(this::loadDefaultUser).getName();
+
+Anti-patterns / red flags
+============================================================
+× Optional<User> as field / in List / in record (usually bad)
+× Optional as method parameter (almost always wrong)
+× if (opt.isPresent()) return opt.get();   ← defeats purpose
+× Optional<List<T>> / Optional<Integer>    ← usually worse than null or empty collection/primitive wrapper
+× Optional.ofNullable(x).get()             ← pointless
+
+Best practices 2025–2026
+============================================================
+✓ Return type when absence is meaningful
+✓ Chain map/flatMap/filter
+✓ Prefer orElseGet over orElse when default is expensive
+✓ Prefer orElseThrow over manual isPresent+get
+✓ Never return null from Optional-returning method
+✓ Rarely store Optional instances long-term
+
+Interview questions – top 10
+============================================================
+1. Why was Optional introduced? When is it better than null?
+2. Optional.of() vs Optional.ofNullable() — when to use each?
+3. orElse vs orElseGet — main difference + performance impact
+4. Can you use Optional as a method parameter? Why/why not?
+5. How to replace deeply nested null checks with Optional?
+6. What exception does empty Optional.get() throw?
+7. Show how to chain 3–4 nested getters safely
+8. Is Optional serializable? Should you put it in DTOs/JSON?
+9. Optional + streams – useful pattern?
+10. When would you still prefer returning null instead of Optional?
+
+Quick one-liners for interviews
+============================================================
+"Optional is a way to say 'this might legitimately be absent' in the type system."
+"Never do .get() without protection — that's just fancy null."
+"Method parameters should almost never be Optional — overload or use @Nullable."
+"orElseGet is lazy, orElse is eager — important when default is expensive."

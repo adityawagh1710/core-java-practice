@@ -1,4 +1,4 @@
-package com.practice.lambdas;
+package com.practice.interfaces.lambdas;
 
 @FunctionalInterface
 interface Operation {

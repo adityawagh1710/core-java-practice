@@ -1,0 +1,749 @@
+         ┌────────────────────────────────────────────────────────────┐
+         │   Introduced  :  Java 8 (2014)                             │
+         │   Works with  :  Functional Interfaces + Lambda            │
+         │   Symbol      :  ::  (double colon)                        │
+         │   Total Types :  4                                         │
+         └────────────────────────────────────────────────────────────┘
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+
+  ┌─────────────────────────────────────────────────────────────────────────────┐
+  │  SECTION 1  │  WHAT IS A METHOD REFERENCE?                                 │
+  └─────────────────────────────────────────────────────────────────────────────┘
+
+  A Method Reference is a SHORTHAND NOTATION for a lambda expression that
+  does nothing except call a single existing method.
+
+  Instead of writing:
+      (parameter) -> SomeClass.method(parameter)
+
+  You write:
+      SomeClass::method
+
+  ▸ It uses the double-colon  ::  operator.
+  ▸ It does NOT call the method — it only REFERS to it.
+  ▸ The actual call happens when the Functional Interface's method is invoked.
+  ▸ It can only be used where a Functional Interface is expected.
+
+  ┌─ Simple Analogy ──────────────────────────────────────────────────────────┐
+  │                                                                            │
+  │  Think of it like giving someone a phone number instead of calling        │
+  │  them right away. You say "use this number when needed" — the call        │
+  │  happens later.                                                            │
+  │                                                                            │
+  │  Method Reference = "use this method when needed"                         │
+  │                                                                            │
+  └────────────────────────────────────────────────────────────────────────────┘
+
+  ┌─ Lambda  vs  Method Reference ────────────────────────────────────────────┐
+  │                                                                            │
+  │   Lambda                              Method Reference                    │
+  │   ─────────────────────────────────── ───────────────────────────────     │
+  │   s -> System.out.println(s)    ==    System.out::println                 │
+  │   s -> s.toUpperCase()          ==    String::toUpperCase                 │
+  │   s -> s.isEmpty()              ==    String::isEmpty                     │
+  │   n -> Math.abs(n)              ==    Math::abs                           │
+  │   () -> new ArrayList<>()       ==    ArrayList::new                      │
+  │   (a,b) -> a.compareTo(b)       ==    String::compareTo                   │
+  │   s -> Integer.parseInt(s)      ==    Integer::parseInt                   │
+  │                                                                            │
+  └────────────────────────────────────────────────────────────────────────────┘
+
+  ★ GOLDEN RULE:
+    Use method reference ONLY when the lambda body is a SINGLE method call
+    with NO extra logic.
+
+    ✔ CAN use:    s -> s.toUpperCase()           single call
+    ✘ CANNOT use: s -> s.toUpperCase() + "!"     extra logic
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+
+  ┌─────────────────────────────────────────────────────────────────────────────┐
+  │  SECTION 2  │  THE 4 TYPES OF METHOD REFERENCES                            │
+  └─────────────────────────────────────────────────────────────────────────────┘
+
+  ┌──────┬──────────────────────────────┬────────────────────────────────────┐
+  │  #   │  Type                        │  Syntax                            │
+  ├──────┼──────────────────────────────┼────────────────────────────────────┤
+  │  1   │  Static method               │  ClassName::staticMethod           │
+  │  2   │  Instance (bound object)     │  object::instanceMethod            │
+  │  3   │  Instance (unbound/any obj)  │  ClassName::instanceMethod         │
+  │  4   │  Constructor                 │  ClassName::new                    │
+  └──────┴──────────────────────────────┴────────────────────────────────────┘
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+
+  ╭─────────────────────────────────────────────────────────────────────────────╮
+  │  TYPE 1  │  Static Method Reference    →    ClassName::staticMethod        │
+  ╰─────────────────────────────────────────────────────────────────────────────╯
+
+  ▸ Refers to a static method of a class.
+  ▸ No object needed — the class owns the method.
+  ▸ Lambda equivalent: (x) -> ClassName.staticMethod(x)
+
+  ┌─ Built-in Static Method References ───────────────────────────────────────┐
+  │                                                                            │
+  │   // Math::abs  →  Function<Integer, Integer>                             │
+  │   Function<Integer, Integer> absVal = Math::abs;                          │
+  │   System.out.println(absVal.apply(-42));     // 42                        │
+  │                                                                            │
+  │   // Math::sqrt  →  Function<Double, Double>                              │
+  │   Function<Double, Double> sqrtFn = Math::sqrt;                           │
+  │   System.out.println(sqrtFn.apply(16.0));    // 4.0                       │
+  │                                                                            │
+  │   // Math::max  →  BiFunction<Integer, Integer, Integer>                  │
+  │   BiFunction<Integer,Integer,Integer> maxFn = Math::max;                  │
+  │   System.out.println(maxFn.apply(10, 25));   // 25                        │
+  │                                                                            │
+  │   // Integer::parseInt  →  Function<String, Integer>                      │
+  │   Function<String, Integer> parse = Integer::parseInt;                    │
+  │   System.out.println(parse.apply("99"));     // 99                        │
+  │                                                                            │
+  │   // String::valueOf  →  Function<Integer, String>                        │
+  │   Function<Integer, String> toStr = String::valueOf;                      │
+  │   System.out.println(toStr.apply(42));       // "42"                      │
+  │                                                                            │
+  │   // Character::isDigit  →  Predicate<Character>                          │
+  │   Predicate<Character> isDigit = Character::isDigit;                      │
+  │   System.out.println(isDigit.test('5'));     // true                      │
+  │   System.out.println(isDigit.test('a'));     // false                     │
+  │                                                                            │
+  │   // Character::isUpperCase  →  Predicate<Character>                      │
+  │   Predicate<Character> isUpper = Character::isUpperCase;                  │
+  │   System.out.println(isUpper.test('A'));     // true                      │
+  │                                                                            │
+  └────────────────────────────────────────────────────────────────────────────┘
+  ┌─ Custom Static Method Reference ──────────────────────────────────────────┐
+  │                                                                            │
+  │   class Util {                                                             │
+  │       static String cleanUp(String s)   { return s.trim().toUpperCase(); }│
+  │       static boolean isPositive(int n)  { return n > 0; }                 │
+  │       static int    doubleIt(int n)     { return n * 2; }                 │
+  │   }                                                                        │
+  │                                                                            │
+  │   UnaryOperator<String>  clean = Util::cleanUp;                           │
+  │   Predicate<Integer>     pos   = Util::isPositive;                        │
+  │   UnaryOperator<Integer> dbl   = Util::doubleIt;                          │
+  │                                                                            │
+  │   System.out.println(clean.apply("  hello  "));  // HELLO                 │
+  │   System.out.println(pos.test(5));               // true                  │
+  │   System.out.println(pos.test(-3));              // false                 │
+  │   System.out.println(dbl.apply(6));              // 12                    │
+  │                                                                            │
+  │   // Use in a manual for-loop filter (no stream)                           │
+  │   List<Integer> nums     = Arrays.asList(-2, 5, -1, 8, 0, 3);             │
+  │   List<Integer> positives = new ArrayList<>();                             │
+  │   for (Integer n : nums) {                                                 │
+  │       if (pos.test(n)) positives.add(n);                                  │
+  │   }                                                                        │
+  │   System.out.println(positives);  // [5, 8, 3]                           │
+  │                                                                            │
+  └────────────────────────────────────────────────────────────────────────────┘
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+
+  ╭─────────────────────────────────────────────────────────────────────────────╮
+  │  TYPE 2  │  Bound Instance Method Ref  →  object::instanceMethod           │
+  ╰─────────────────────────────────────────────────────────────────────────────╯
+
+  ▸ Refers to an instance method of a SPECIFIC, already-created object.
+  ▸ The same object is reused every single time the method is called.
+  ▸ "Bound" = the instance is FIXED / captured at the time of writing.
+  ▸ Lambda equivalent: (x) -> specificObject.instanceMethod(x)
+
+  ┌─ System.out::println — the most famous one ───────────────────────────────┐
+  │                                                                            │
+  │   // System.out is a specific PrintStream instance                         │
+  │   Consumer<String> printer = System.out::println;                         │
+  │                                                                            │
+  │   printer.accept("Hello");    // Hello                                    │
+  │   printer.accept("World");    // World                                    │
+  │                                                                            │
+  │   // Most common usage — forEach with method reference                     │
+  │   List<String> names = Arrays.asList("Alice", "Bob", "Charlie");          │
+  │   names.forEach(System.out::println);  // prints each                     │
+  │                                                                            │
+  └────────────────────────────────────────────────────────────────────────────┘
+  ┌─ Custom bound instance method ─────────────────────────────────────────────┐
+  │                                                                            │
+  │   class Greeter {                                                          │
+  │       private final String prefix;                                         │
+  │       Greeter(String p) { prefix = p; }                                    │
+  │       void greet(String name) {                                            │
+  │           System.out.println(prefix + ", " + name + "!");                 │
+  │       }                                                                    │
+  │   }                                                                        │
+  │                                                                            │
+  │   Greeter formal = new Greeter("Good morning");                            │
+  │   Greeter casual = new Greeter("Hey");                                     │
+  │                                                                            │
+  │   // Each Consumer is BOUND to its own Greeter instance                    │
+  │   Consumer<String> formalGreet = formal::greet;                           │
+  │   Consumer<String> casualGreet = casual::greet;                           │
+  │                                                                            │
+  │   formalGreet.accept("Alice");   // Good morning, Alice!                  │
+  │   casualGreet.accept("Bob");     // Hey, Bob!                             │
+  │                                                                            │
+  │   // Reuse across a list                                                   │
+  │   List<String> guests = Arrays.asList("Carol", "Dave");                   │
+  │   guests.forEach(formalGreet);                                             │
+  │   // Good morning, Carol!                                                  │
+  │   // Good morning, Dave!                                                   │
+  │                                                                            │
+  └────────────────────────────────────────────────────────────────────────────┘
+  ┌─ StringBuilder bound appender ────────────────────────────────────────────┐
+  │                                                                            │
+  │   StringBuilder sb      = new StringBuilder();                             │
+  │   Consumer<String> append = sb::append;   // bound to this sb             │
+  │                                                                            │
+  │   append.accept("Java");                                                   │
+  │   append.accept(" is");                                                    │
+  │   append.accept(" awesome");                                               │
+  │                                                                            │
+  │   System.out.println(sb.toString());  // Java is awesome                  │
+  │                                                                            │
+  └────────────────────────────────────────────────────────────────────────────┘
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+
+  ╭─────────────────────────────────────────────────────────────────────────────╮
+  │  TYPE 3  │  Unbound Instance Method Ref  →  ClassName::instanceMethod      │
+  ╰─────────────────────────────────────────────────────────────────────────────╯
+
+  ▸ Refers to an instance method, but NO specific object is captured.
+  ▸ The FIRST PARAMETER of the lambda becomes the object the method is called on.
+  ▸ "Unbound" = the instance is NOT fixed — it is supplied at call time.
+  ▸ Lambda equivalent: (obj, args) -> obj.instanceMethod(args)
+
+  ┌─ String instance methods — most common ───────────────────────────────────┐
+  │                                                                            │
+  │   // s -> s.toUpperCase()  becomes  String::toUpperCase                   │
+  │   UnaryOperator<String>   upper   = String::toUpperCase;                  │
+  │   UnaryOperator<String>   lower   = String::toLowerCase;                  │
+  │   UnaryOperator<String>   trim    = String::trim;                         │
+  │   Predicate<String>       isEmpty = String::isEmpty;                      │
+  │   Predicate<String>       isBlank = String::isBlank;                      │
+  │   Function<String,Integer> len    = String::length;                       │
+  │                                                                            │
+  │   System.out.println(upper.apply("hello"));    // HELLO                   │
+  │   System.out.println(trim.apply("  hi  "));    // hi                      │
+  │   System.out.println(isEmpty.test(""));         // true                   │
+  │   System.out.println(len.apply("Java"));        // 4                      │
+  │                                                                            │
+  │   // (a,b) -> a.compareTo(b)  becomes  String::compareTo                  │
+  │   Comparator<String> cmp = String::compareTo;                             │
+  │   System.out.println(cmp.compare("apple","banana"));  // negative         │
+  │                                                                            │
+  └────────────────────────────────────────────────────────────────────────────┘
+  ┌─ Custom class — unbound instance method ──────────────────────────────────┐
+  │                                                                            │
+  │   class Student {                                                          │
+  │       String  name;                                                        │
+  │       int     marks;                                                       │
+  │       Student(String n, int m) { name = n; marks = m; }                   │
+  │                                                                            │
+  │       String  getName()   { return name; }                                 │
+  │       int     getMarks()  { return marks; }                                │
+  │       boolean isPassed()  { return marks >= 35; }                         │
+  │                                                                            │
+  │       public String toString() { return name + "(" + marks + ")"; }       │
+  │   }                                                                        │
+  │                                                                            │
+  │   // Student::getName   →  Function<Student, String>                      │
+  │   // Student::isPassed  →  Predicate<Student>                             │
+  │   // Student::getMarks  →  Function<Student, Integer>  (for sorting)      │
+  │                                                                            │
+  │   Function<Student,String>  getName  = Student::getName;                  │
+  │   Predicate<Student>        passed   = Student::isPassed;                 │
+  │                                                                            │
+  │   List<Student> students = Arrays.asList(                                 │
+  │       new Student("Alice", 80),                                            │
+  │       new Student("Bob",   28),                                            │
+  │       new Student("Carol", 55)                                             │
+  │   );                                                                       │
+  │                                                                            │
+  │   // Manual filter — no stream needed                                      │
+  │   for (Student s : students) {                                             │
+  │       if (passed.test(s))                                                  │
+  │           System.out.println(getName.apply(s) + " passed");               │
+  │   }                                                                        │
+  │   // Alice passed                                                          │
+  │   // Carol passed                                                          │
+  │                                                                            │
+  │   // Sort by marks using Comparator.comparing + method reference           │
+  │   students.sort(Comparator.comparing(Student::getMarks));                 │
+  │   students.forEach(System.out::println);                                   │
+  │   // Bob(28)  Carol(55)  Alice(80)                                         │
+  │                                                                            │
+  └────────────────────────────────────────────────────────────────────────────┘
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+
+  ╭─────────────────────────────────────────────────────────────────────────────╮
+  │  TYPE 4  │  Constructor Reference    →    ClassName::new                   │
+  ╰─────────────────────────────────────────────────────────────────────────────╯
+
+  ▸ Refers to a constructor to create new objects.
+  ▸ Maps to a Functional Interface based on number of constructor parameters:
+       0 params  →  Supplier<T>
+       1 param   →  Function<P, T>
+       2 params  →  BiFunction<P1, P2, T>
+  ▸ Lambda equivalent: () -> new ClassName()  or  (x) -> new ClassName(x)
+
+  ┌─ No-arg constructor → Supplier<T> ────────────────────────────────────────┐
+  │                                                                            │
+  │   Supplier<ArrayList>     newList = ArrayList::new;                       │
+  │   Supplier<HashMap>       newMap  = HashMap::new;                         │
+  │   Supplier<StringBuilder> newSb   = StringBuilder::new;                   │
+  │                                                                            │
+  │   ArrayList     list = newList.get();   // new ArrayList()                │
+  │   HashMap       map  = newMap.get();    // new HashMap()                  │
+  │   StringBuilder sb   = newSb.get();    // new StringBuilder()             │
+  │                                                                            │
+  └────────────────────────────────────────────────────────────────────────────┘
+  ┌─ One-arg constructor → Function<P, T> ────────────────────────────────────┐
+  │                                                                            │
+  │   class Product {                                                          │
+  │       String name;                                                         │
+  │       Product(String name) { this.name = name; }                          │
+  │       public String toString() { return "Product(" + name + ")"; }        │
+  │   }                                                                        │
+  │                                                                            │
+  │   // Function<String, Product> — takes name, produces Product             │
+  │   Function<String, Product> factory = Product::new;                       │
+  │                                                                            │
+  │   Product p1 = factory.apply("Laptop");   // Product(Laptop)              │
+  │   Product p2 = factory.apply("Phone");    // Product(Phone)               │
+  │                                                                            │
+  │   // Create a list of products from names                                  │
+  │   List<String>  names    = Arrays.asList("TV", "Tablet", "Watch");        │
+  │   List<Product> products = new ArrayList<>();                              │
+  │   for (String n : names) {                                                 │
+  │       products.add(factory.apply(n));                                      │
+  │   }                                                                        │
+  │   products.forEach(System.out::println);                                   │
+  │   // Product(TV)                                                           │
+  │   // Product(Tablet)                                                       │
+  │   // Product(Watch)                                                        │
+  │                                                                            │
+  └────────────────────────────────────────────────────────────────────────────┘
+  ┌─ Two-arg constructor → BiFunction<P1, P2, T> ─────────────────────────────┐
+  │                                                                            │
+  │   class Employee {                                                         │
+  │       String name; int salary;                                             │
+  │       Employee(String n, int s) { name = n; salary = s; }                 │
+  │       public String toString() { return name + "=$" + salary; }           │
+  │   }                                                                        │
+  │                                                                            │
+  │   // BiFunction<String, Integer, Employee>                                 │
+  │   BiFunction<String, Integer, Employee> hire = Employee::new;             │
+  │                                                                            │
+  │   Employee e1 = hire.apply("Alice", 70000);   // Alice=$70000             │
+  │   Employee e2 = hire.apply("Bob",   55000);   // Bob=$55000               │
+  │                                                                            │
+  │   System.out.println(e1);   // Alice=$70000                               │
+  │   System.out.println(e2);   // Bob=$55000                                 │
+  │                                                                            │
+  └────────────────────────────────────────────────────────────────────────────┘
+  ┌─ Factory pattern with constructor reference ───────────────────────────────┐
+  │                                                                            │
+  │   @FunctionalInterface                                                     │
+  │   interface Creator<T> { T create(String name); }                         │
+  │                                                                            │
+  │   class Cat { Cat(String n) { System.out.println("Cat: " + n); } }        │
+  │   class Dog { Dog(String n) { System.out.println("Dog: " + n); } }        │
+  │                                                                            │
+  │   Creator<Cat> makeCat = Cat::new;                                        │
+  │   Creator<Dog> makeDog = Dog::new;                                        │
+  │                                                                            │
+  │   makeCat.create("Whiskers");   // Cat: Whiskers                          │
+  │   makeDog.create("Buddy");      // Dog: Buddy                             │
+  │                                                                            │
+  └────────────────────────────────────────────────────────────────────────────┘
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+
+  ┌─────────────────────────────────────────────────────────────────────────────┐
+  │  SECTION 3  │  REAL-WORLD PRACTICAL EXAMPLES                               │
+  └─────────────────────────────────────────────────────────────────────────────┘
+
+  ┌─ Practical 1 — Sort using Comparator.comparing with method reference ──────┐
+  │                                                                            │
+  │   class Person {                                                           │
+  │       String name; int age;                                                │
+  │       Person(String n, int a) { name = n; age = a; }                      │
+  │       String getName() { return name; }                                    │
+  │       int    getAge()  { return age; }                                     │
+  │       public String toString() { return name + "(" + age + ")"; }         │
+  │   }                                                                        │
+  │                                                                            │
+  │   List<Person> people = new ArrayList<>(Arrays.asList(                    │
+  │       new Person("Charlie", 30),                                           │
+  │       new Person("Alice",   25),                                           │
+  │       new Person("Bob",     35)                                            │
+  │   ));                                                                      │
+  │                                                                            │
+  │   // Sort by name ascending                                                 │
+  │   people.sort(Comparator.comparing(Person::getName));                      │
+  │   people.forEach(System.out::println);   // Alice(25) Charlie(30) Bob(35) │
+  │                                                                            │
+  │   // Sort by age descending                                                 │
+  │   people.sort(Comparator.comparing(Person::getAge).reversed());            │
+  │   people.forEach(System.out::println);   // Bob(35) Charlie(30) Alice(25) │
+  │                                                                            │
+  │   // Sort by name then by age                                               │
+  │   people.sort(Comparator.comparing(Person::getName)                        │
+  │                          .thenComparing(Person::getAge));                  │
+  │                                                                            │
+  └────────────────────────────────────────────────────────────────────────────┘
+  ┌─ Practical 2 — Generic filter using method reference as Predicate ─────────┐
+  │                                                                            │
+  │   static <T> List<T> filter(List<T> list, Predicate<T> check) {           │
+  │       List<T> out = new ArrayList<>();                                     │
+  │       for (T item : list) {                                                │
+  │           if (check.test(item)) out.add(item);                             │
+  │       }                                                                    │
+  │       return out;                                                          │
+  │   }                                                                        │
+  │                                                                            │
+  │   List<String> words = Arrays.asList("hello","","world","  ","java");     │
+  │                                                                            │
+  │   // String::isBlank as Predicate (Type 3 — unbound)                      │
+  │   List<String> nonBlanks = filter(words, Predicate.not(String::isBlank)); │
+  │   System.out.println(nonBlanks);    // [hello, world, java]               │
+  │                                                                            │
+  │   // Character::isUpperCase as Predicate (Type 1 — static)                │
+  │   List<Character> chars  = Arrays.asList('A','b','C','d','E');            │
+  │   List<Character> uppers = filter(chars, Character::isUpperCase);         │
+  │   System.out.println(uppers);       // [A, C, E]                          │
+  │                                                                            │
+  └────────────────────────────────────────────────────────────────────────────┘
+  ┌─ Practical 3 — Generic printAll using Consumer method reference ────────────┐
+  │                                                                            │
+  │   static <T> void printAll(List<T> list, Consumer<T> action) {            │
+  │       for (T item : list) action.accept(item);                             │
+  │   }                                                                        │
+  │                                                                            │
+  │   List<String> fruits = Arrays.asList("Apple", "Banana", "Mango");        │
+  │                                                                            │
+  │   // Type 2 (bound) — System.out is the specific object                    │
+  │   printAll(fruits, System.out::println);                                   │
+  │                                                                            │
+  │   // Type 1 (static) — passing a custom static logger                      │
+  │   printAll(fruits, MyLogger::log);   // static void log(String s)          │
+  │                                                                            │
+  └────────────────────────────────────────────────────────────────────────────┘
+  ┌─ Practical 4 — Build objects from list using constructor reference ─────────┐
+  │                                                                            │
+  │   Function<String, Product> factory = Product::new;                       │
+  │                                                                            │
+  │   List<String>  names    = Arrays.asList("TV","Tablet","Watch","Phone");   │
+  │   List<Product> products = new ArrayList<>();                              │
+  │                                                                            │
+  │   for (String n : names) {                                                 │
+  │       products.add(factory.apply(n));                                      │
+  │   }                                                                        │
+  │   products.forEach(System.out::println);                                   │
+  │   // Product(TV)  Product(Tablet)  Product(Watch)  Product(Phone)          │
+  │                                                                            │
+  └────────────────────────────────────────────────────────────────────────────┘
+  ┌─ Practical 5 — Comparator with method reference (no lambda) ───────────────┐
+  │                                                                            │
+  │   List<String> names = Arrays.asList("Banana","Apple","Cherry","Date");    │
+  │                                                                            │
+  │   // Sort alphabetically — String::compareTo as Comparator                 │
+  │   Collections.sort(names, String::compareTo);                             │
+  │   System.out.println(names);   // [Apple, Banana, Cherry, Date]           │
+  │                                                                            │
+  │   // Sort by length — String::length as key extractor                      │
+  │   names.sort(Comparator.comparingInt(String::length));                    │
+  │   System.out.println(names);   // [Date, Apple, Banana, Cherry]           │
+  │                                                                            │
+  └────────────────────────────────────────────────────────────────────────────┘
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+
+  ┌─────────────────────────────────────────────────────────────────────────────┐
+  │  SECTION 4  │  TYPE 3 vs TYPE 2 — KEY DIFFERENCE (Often Confused!)         │
+  └─────────────────────────────────────────────────────────────────────────────┘
+
+  ┌──────────────────────────┬───────────────────────────────────────────────┐
+  │  Type 2 (Bound)          │  Type 3 (Unbound)                             │
+  ├──────────────────────────┼───────────────────────────────────────────────┤
+  │  object::method          │  ClassName::method                            │
+  │  Instance is FIXED       │  Instance is PASSED IN as first argument      │
+  │  Consumer<String>        │  UnaryOperator<String> / Function<T,R>        │
+  │  System.out::println     │  String::toUpperCase                          │
+  │  formal::greet           │  Student::getName                             │
+  └──────────────────────────┴───────────────────────────────────────────────┘
+
+  Example:
+    // Type 2 — "print" is always called on System.out (FIXED object)
+    Consumer<String> print = System.out::println;
+    print.accept("Hi");    // System.out.println("Hi")
+
+    // Type 3 — "upper" is called on WHATEVER String is passed
+    UnaryOperator<String> upper = String::toUpperCase;
+    upper.apply("hi");     // "hi".toUpperCase()  — "hi" is the object!
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+
+  ╔══════════════════════════════════════════════════════════════════════════════╗
+  ║           INTERVIEW QUESTIONS — Method References                            ║
+  ╠══════════════════════════════════════════════════════════════════════════════╣
+  ║  Freshers  (★)   Mid-level  (★★)   Senior  (★★★)                          ║
+  ╚══════════════════════════════════════════════════════════════════════════════╝
+
+  ┌─ Q1 ★ ───────────────────────────────────────────────────────────────────┐
+  │  What is a Method Reference in Java?                                      │
+  ├──────────────────────────────────────────────────────────────────────────┤
+  │  A Method Reference is a compact, readable alternative to a lambda        │
+  │  expression that calls an existing method by name using the :: operator.  │
+  │  It can only be used where a Functional Interface is expected.            │
+  │                                                                           │
+  │  Example:                                                                 │
+  │    Lambda  →  s -> System.out.println(s)                                  │
+  │    Ref     →  System.out::println                                         │
+  └──────────────────────────────────────────────────────────────────────────┘
+
+  ┌─ Q2 ★ ───────────────────────────────────────────────────────────────────┐
+  │  How many types of Method References are there in Java?                   │
+  ├──────────────────────────────────────────────────────────────────────────┤
+  │  There are 4 types:                                                       │
+  │   1. Static method reference         →  ClassName::staticMethod          │
+  │   2. Bound instance method reference →  object::instanceMethod           │
+  │   3. Unbound instance method ref     →  ClassName::instanceMethod        │
+  │   4. Constructor reference           →  ClassName::new                   │
+  └──────────────────────────────────────────────────────────────────────────┘
+
+  ┌─ Q3 ★ ───────────────────────────────────────────────────────────────────┐
+  │  What is the symbol used for Method Reference?                            │
+  ├──────────────────────────────────────────────────────────────────────────┤
+  │  The double-colon  ::  (also called the Method Reference operator).       │
+  │  Introduced in Java 8 along with Lambdas and Functional Interfaces.      │
+  └──────────────────────────────────────────────────────────────────────────┘
+
+  ┌─ Q4 ★ ───────────────────────────────────────────────────────────────────┐
+  │  Can we use a Method Reference without a Functional Interface?            │
+  ├──────────────────────────────────────────────────────────────────────────┤
+  │  No. Method references are always assigned to or passed as a Functional   │
+  │  Interface. The interface provides the target type — the compiler uses    │
+  │  it to determine which method the reference points to.                   │
+  └──────────────────────────────────────────────────────────────────────────┘
+
+  ┌─ Q5 ★★ ──────────────────────────────────────────────────────────────────┐
+  │  What is the difference between a Lambda and a Method Reference?          │
+  ├──────────────────────────────────────────────────────────────────────────┤
+  │  ┌──────────────────────┬────────────────────────────────────────────┐    │
+  │  │  Lambda              │  Method Reference                          │    │
+  │  ├──────────────────────┼────────────────────────────────────────────┤    │
+  │  │  Can have any logic  │  Only a single method call                 │    │
+  │  │  Always new syntax   │  Reuses existing method                    │    │
+  │  │  More verbose        │  More concise and readable                 │    │
+  │  │  s -> s.trim()       │  String::trim                              │    │
+  │  └──────────────────────┴────────────────────────────────────────────┘    │
+  │                                                                           │
+  │  When lambda body has extra logic — MUST use lambda.                      │
+  │  When lambda body is ONE method call — CAN use method reference.          │
+  └──────────────────────────────────────────────────────────────────────────┘
+
+  ┌─ Q6 ★★ ──────────────────────────────────────────────────────────────────┐
+  │  What is the difference between Type 2 (Bound) and Type 3 (Unbound)?     │
+  ├──────────────────────────────────────────────────────────────────────────┤
+  │  Bound (Type 2):                                                          │
+  │   ▸ A specific object is captured at definition time.                     │
+  │   ▸ The method is always called on THAT object.                           │
+  │   ▸ object::method  (e.g. System.out::println)                            │
+  │                                                                           │
+  │  Unbound (Type 3):                                                        │
+  │   ▸ No specific object is captured.                                       │
+  │   ▸ The first parameter of the lambda IS the object.                      │
+  │   ▸ ClassName::method  (e.g. String::toUpperCase)                         │
+  │   ▸ When you call it: "hi".toUpperCase() — "hi" is the object.           │
+  └──────────────────────────────────────────────────────────────────────────┘
+
+  ┌─ Q7 ★★ ──────────────────────────────────────────────────────────────────┐
+  │  What Functional Interface does System.out::println map to?               │
+  ├──────────────────────────────────────────────────────────────────────────┤
+  │  Consumer<String>  because:                                               │
+  │   ▸ It takes one String argument                                          │
+  │   ▸ Returns void                                                          │
+  │   ▸ That matches Consumer's abstract method: void accept(T t)             │
+  │                                                                           │
+  │   Consumer<String> p = System.out::println;                               │
+  │   p.accept("Hello");   // Hello                                           │
+  └──────────────────────────────────────────────────────────────────────────┘
+
+  ┌─ Q8 ★★ ──────────────────────────────────────────────────────────────────┐
+  │  What Functional Interface does ClassName::new (no-arg) map to?           │
+  ├──────────────────────────────────────────────────────────────────────────┤
+  │  Supplier<T>  because:                                                    │
+  │   ▸ No parameters                                                         │
+  │   ▸ Returns a new instance of type T                                      │
+  │   ▸ Matches Supplier's abstract method: T get()                           │
+  │                                                                           │
+  │   Supplier<ArrayList> newList = ArrayList::new;                           │
+  │   ArrayList list = newList.get();   // new ArrayList()                    │
+  └──────────────────────────────────────────────────────────────────────────┘
+
+  ┌─ Q9 ★★ ──────────────────────────────────────────────────────────────────┐
+  │  Does a Method Reference create a new object each time?                   │
+  ├──────────────────────────────────────────────────────────────────────────┤
+  │  No — for Type 1, 2, and 3. The method reference itself does NOT create   │
+  │  an object. The JVM generates an instance of the Functional Interface     │
+  │  lazily using invokedynamic (under the hood).                             │
+  │                                                                           │
+  │  For Type 4 (constructor reference), the method GET/APPLY creates a new   │
+  │  instance — but the reference itself does not.                            │
+  └──────────────────────────────────────────────────────────────────────────┘
+
+  ┌─ Q10 ★★ ─────────────────────────────────────────────────────────────────┐
+  │  What happens if the method referenced is overloaded?                     │
+  ├──────────────────────────────────────────────────────────────────────────┤
+  │  The compiler uses the TARGET TYPE (the Functional Interface) to resolve  │
+  │  which overloaded version to use.                                         │
+  │                                                                           │
+  │  Example:                                                                 │
+  │   // println is overloaded — takes String, int, double, Object etc.       │
+  │   Consumer<String>  p1 = System.out::println;   // uses println(String)  │
+  │   Consumer<Integer> p2 = System.out::println;   // uses println(int)     │
+  │                                                                           │
+  │  The Functional Interface parameter type tells the compiler which one.    │
+  └──────────────────────────────────────────────────────────────────────────┘
+
+  ┌─ Q11 ★★ ─────────────────────────────────────────────────────────────────┐
+  │  Can Method Reference be used with Comparator.comparing()?                │
+  ├──────────────────────────────────────────────────────────────────────────┤
+  │  Yes — it is one of the most common real-world uses.                      │
+  │  Comparator.comparing() takes a Function<T, U> key extractor.            │
+  │  A getter method reference fits this perfectly.                           │
+  │                                                                           │
+  │   // Sort list of Employee by name                                         │
+  │   employees.sort(Comparator.comparing(Employee::getName));                │
+  │                                                                           │
+  │   // Sort by salary descending                                             │
+  │   employees.sort(Comparator.comparing(Employee::getSalary).reversed());   │
+  └──────────────────────────────────────────────────────────────────────────┘
+
+  ┌─ Q12 ★★★ ────────────────────────────────────────────────────────────────┐
+  │  Are Method References faster than Lambda Expressions?                    │
+  ├──────────────────────────────────────────────────────────────────────────┤
+  │  No significant performance difference at runtime.                        │
+  │  Both use invokedynamic bytecode instruction introduced in Java 7.        │
+  │  The JVM compiles them similarly.                                         │
+  │  Method references are preferred for READABILITY, not performance.        │
+  └──────────────────────────────────────────────────────────────────────────┘
+
+  ┌─ Q13 ★★★ ────────────────────────────────────────────────────────────────┐
+  │  Can you use a Method Reference for a private method?                     │
+  ├──────────────────────────────────────────────────────────────────────────┤
+  │  Only if the reference is used WITHIN the same class (where the private   │
+  │  method is accessible).                                                   │
+  │                                                                           │
+  │  class MyClass {                                                           │
+  │      private static void doWork(String s) { System.out.println(s); }     │
+  │                                                                           │
+  │      void run() {                                                          │
+  │          Consumer<String> c = MyClass::doWork;  // OK — same class       │
+  │          c.accept("test");                                                 │
+  │      }                                                                    │
+  │  }                                                                        │
+  │                                                                           │
+  │  From outside the class — compile error (private not accessible).         │
+  └──────────────────────────────────────────────────────────────────────────┘
+
+  ┌─ Q14 ★★★ ────────────────────────────────────────────────────────────────┐
+  │  Can a constructor reference be used with a custom Functional Interface?  │
+  ├──────────────────────────────────────────────────────────────────────────┤
+  │  Yes. Any FI whose abstract method signature matches the constructor       │
+  │  parameters can accept a constructor reference.                           │
+  │                                                                           │
+  │  @FunctionalInterface                                                      │
+  │  interface Creator<T> { T create(String name); }                          │
+  │                                                                           │
+  │  class Product { Product(String n) { ... } }                              │
+  │                                                                           │
+  │  Creator<Product> factory = Product::new;    // ✔ works perfectly         │
+  │  Product p = factory.create("Laptop");                                    │
+  └──────────────────────────────────────────────────────────────────────────┘
+
+  ┌─ Q15 ★ ──────────────────────────────────────────────────────────────────┐
+  │  Write all 4 types of Method References with one example each.            │
+  ├──────────────────────────────────────────────────────────────────────────┤
+  │  // Type 1: Static                                                        │
+  │  Function<String, Integer> parse = Integer::parseInt;                     │
+  │  System.out.println(parse.apply("42"));          // 42                   │
+  │                                                                           │
+  │  // Type 2: Bound instance                                                │
+  │  Consumer<String> printer = System.out::println;                          │
+  │  printer.accept("Hello");                        // Hello                 │
+  │                                                                           │
+  │  // Type 3: Unbound instance                                              │
+  │  UnaryOperator<String> upper = String::toUpperCase;                       │
+  │  System.out.println(upper.apply("java"));        // JAVA                  │
+  │                                                                           │
+  │  // Type 4: Constructor                                                   │
+  │  Supplier<ArrayList> newList = ArrayList::new;                            │
+  │  ArrayList list = newList.get();                 // new ArrayList()       │
+  └──────────────────────────────────────────────────────────────────────────┘
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+
+  ╔══════════════════════════════════════════════════════════════════════════════╗
+  ║                 QUICK REFERENCE — All 4 Types at a Glance                   ║
+  ╠══════════════════════════════════════════════════════════════════════════════╣
+  ║                                                                              ║
+  ║  Type 1  │  Static         │  Math::abs             │  Function<T,R>        ║
+  ║          │                 │  Integer::parseInt     │  Predicate<T>         ║
+  ║          │                 │  Character::isDigit    │  UnaryOperator<T>     ║
+  ╠══════════════════════════════════════════════════════════════════════════════╣
+  ║  Type 2  │  Bound instance │  System.out::println   │  Consumer<T>          ║
+  ║          │  (fixed object) │  myObj::myMethod       │  Supplier<T>          ║
+  ╠══════════════════════════════════════════════════════════════════════════════╣
+  ║  Type 3  │  Unbound inst.  │  String::toUpperCase   │  UnaryOperator<T>     ║
+  ║          │  (arg=object)   │  Student::getName      │  Function<T,R>        ║
+  ║          │                 │  String::compareTo     │  Comparator<T>        ║
+  ╠══════════════════════════════════════════════════════════════════════════════╣
+  ║  Type 4  │  Constructor    │  ArrayList::new        │  Supplier<T>          ║
+  ║          │                 │  Product::new          │  Function<P,T>        ║
+  ║          │                 │  Employee::new         │  BiFunction<P1,P2,T>  ║
+  ╚══════════════════════════════════════════════════════════════════════════════╝
+
+
+  ┌──────────────────────────────────────────────────────────────────────────┐
+  │                     Q U I C K  S U M M A R Y                             │
+  ├──────────────────────────────────────────────────────────────────────────┤
+  │                                                                           │
+  │  ▸ Method Reference  =  shorthand for a single-method lambda              │
+  │  ▸ Symbol            =  ::  (double colon)                               │
+  │  ▸ Requires          =  a Functional Interface as target type             │
+  │  ▸ Types             =  Static · Bound · Unbound · Constructor           │
+  │  ▸ Golden Rule       =  only when lambda body = one method call           │
+  │  ▸ Most common       =  System.out::println, String::toUpperCase          │
+  │                         Comparator.comparing(X::getField)                │
+  │  ▸ Performance       =  same as lambda — use for readability              │
+  │                                                                           │
+  └───────────────────────────────────────────────────────────────────────────┘
+
+╔══════════════════════════════════════════════════════════════════════════════════════╗
+║           End of Method References Guide  |  Java 8+  |  Good luck, Aditya!          ║
+╚══════════════════════════════════════════════════════════════════════════════════════╝
