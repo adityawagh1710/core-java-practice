@@ -63,19 +63,25 @@ public class CustomClassStreamExample2 {
 				new Employee(4, "Amit", "Finance", 50000)
 		);
 		
-		System.out.println("Salary >50000 Results:");
-		employees.stream().filter(employee -> employee.getSalary() > 50000).forEach(System.out::println);
+		System.out.println("Salary > 50000 results:");
+		employees.stream()
+				.filter(employee -> employee.getSalary() > 50000)
+				.forEach(System.out::println);
 		
 		System.out.println("Sorted names:");
-		employees.stream().map(Employee::getName).sorted().forEach(System.out::println);
+		employees.stream()
+				.map(Employee::getName)
+				.sorted()
+				.forEach(System.out::println);
 		
-		System.out.println("Highest Salary");
-		Employee emp = employees.stream()
-				.max((e1, e2) -> Double.compare(e1.getSalary(), e2.getSalary()))
-				.orElse(null);
-		System.out.println(emp);
+		System.out.println("Highest salary:");
+		System.out.println(
+				employees.stream()
+						.max((e1, e2) -> Double.compare(e1.getSalary(), e2.getSalary()))
+						.orElse(null)
+		);
 		
-		System.out.println("Employees sorted by highest Salary");
+		System.out.println("Employees sorted by highest salary:");
 		employees.stream()
 				.sorted((e1, e2) -> Double.compare(e1.getSalary(), e2.getSalary()))
 				.forEach(System.out::println);
