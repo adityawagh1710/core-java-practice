@@ -20,7 +20,6 @@ class Student2 {
 	}
 	
 	public boolean hasPassed(int passMarks) {
-		System.exit(marks);
 		return marks >= passMarks;
 	}
 }
