@@ -1,0 +1,475 @@
+================================================================================
+             JAVA — STREAM API: NOTES, EXAMPLES & INTERVIEW QUESTIONS
+================================================================================
+
+TABLE OF CONTENTS
+-----------------
+ 1. What is the Stream API?
+ 2. Key Characteristics
+ 3. Creating Streams
+ 4. Intermediate Operations
+ 5. Terminal Operations
+ 6. Common Patterns & Examples
+ 7. Java 9–21 Stream Enhancements
+ 8. Parallel Streams
+ 9. Interview Questions & Answers
+
+================================================================================
+1. WHAT IS THE STREAM API?
+================================================================================
+
+Introduced in Java 8, the Stream API (java.util.stream) allows functional-style
+operations on sequences of elements (from collections, arrays, I/O channels, etc.)
+
+A Stream is NOT a data structure — it does NOT store data.
+It is a pipeline of operations applied to a source.
+
+import java.util.stream.*;
+import java.util.*;
+
+================================================================================
+2. KEY CHARACTERISTICS
+================================================================================
+
+  - Lazy evaluation    : Intermediate ops are only triggered by terminal ops
+  - Single-use         : A stream can be consumed only ONCE
+  - Non-interfering    : Stream ops should not modify the source
+  - Stateless (mostly) : Operations like filter/map don't depend on other elements
+  - Can be parallel    : Easy parallelism via .parallelStream()
+
+================================================================================
+3. CREATING STREAMS
+================================================================================
+
+// From a Collection
+List<String> list = List.of("apple", "banana", "cherry");
+Stream<String> s1 = list.stream();
+
+// From an Array
+Stream<String> s2 = Arrays.stream(new String[]{"a", "b", "c"});
+
+// Stream.of()
+Stream<Integer> s3 = Stream.of(1, 2, 3, 4, 5);
+
+// Stream.builder()
+Stream<String> s4 = Stream.<String>builder()
+    .add("Java").add("Streams").build();
+
+// Stream.iterate() — infinite stream
+Stream<Integer> evens = Stream.iterate(0, n -> n + 2); // 0, 2, 4, 6 ...
+
+// Stream.iterate() with predicate — Java 9+
+Stream<Integer> limited = Stream.iterate(0, n -> n < 10, n -> n + 1);
+
+// Stream.generate() — infinite stream
+Stream<Double> randoms = Stream.generate(Math::random);
+
+// IntStream, LongStream, DoubleStream (primitive streams)
+IntStream range = IntStream.range(1, 6);       // 1, 2, 3, 4, 5
+IntStream rangeClosed = IntStream.rangeClosed(1, 5); // same
+
+================================================================================
+4. INTERMEDIATE OPERATIONS (Lazy — return a Stream)
+================================================================================
+
+Source -> [filter] -> [map] -> [sorted] -> ... -> Terminal
+
+------------------------------------------------------------------------
+filter(Predicate)         — keeps elements matching the condition
+------------------------------------------------------------------------
+List<String> fruits = List.of("apple", "avocado", "banana", "apricot");
+fruits.stream()
+      .filter(f -> f.startsWith("a"))
+      .forEach(System.out::println);
+// Output: apple, avocado, apricot
+
+------------------------------------------------------------------------
+map(Function)             — transforms each element
+------------------------------------------------------------------------
+List<String> names = List.of("alice", "bob", "carol");
+names.stream()
+     .map(String::toUpperCase)
+     .forEach(System.out::println);
+// Output: ALICE, BOB, CAROL
+
+------------------------------------------------------------------------
+mapToInt / mapToLong / mapToDouble — to primitive stream
+------------------------------------------------------------------------
+int total = List.of("apple", "banana", "kiwi")
+               .stream()
+               .mapToInt(String::length)
+               .sum();
+// total = 15
+
+------------------------------------------------------------------------
+flatMap(Function)         — flattens nested streams into one
+------------------------------------------------------------------------
+List<List<Integer>> nested = List.of(List.of(1, 2), List.of(3, 4));
+nested.stream()
+      .flatMap(Collection::stream)
+      .forEach(System.out::print);
+// Output: 1234
+
+------------------------------------------------------------------------
+distinct()                — removes duplicates (uses equals/hashCode)
+------------------------------------------------------------------------
+Stream.of(1, 2, 2, 3, 3, 3)
+      .distinct()
+      .forEach(System.out::print);
+// Output: 123
+
+------------------------------------------------------------------------
+sorted()                  — natural order
+sorted(Comparator)        — custom order
+------------------------------------------------------------------------
+List.of("banana", "apple", "cherry")
+    .stream()
+    .sorted()
+    .forEach(System.out::println);
+
+------------------------------------------------------------------------
+peek(Consumer)            — for debugging; like forEach but doesn't consume
+------------------------------------------------------------------------
+Stream.of(1, 2, 3)
+      .peek(n -> System.out.println("Before: " + n))
+      .map(n -> n * 2)
+      .peek(n -> System.out.println("After: " + n))
+      .toList();
+
+------------------------------------------------------------------------
+limit(n)                  — truncate to n elements
+skip(n)                   — skip first n elements
+------------------------------------------------------------------------
+Stream.iterate(1, n -> n + 1)
+      .skip(5)
+      .limit(5)
+      .forEach(System.out::print);
+// Output: 678910
+
+------------------------------------------------------------------------
+takeWhile(Predicate) — Java 9+   takes while condition is true, then stops
+dropWhile(Predicate) — Java 9+   drops while condition is true, then takes rest
+------------------------------------------------------------------------
+Stream.of(1, 2, 3, 4, 5, 1)
+      .takeWhile(n -> n < 4)
+      .forEach(System.out::print);
+// Output: 123  (stops at 4, doesn't check 5 or 1)
+
+================================================================================
+5. TERMINAL OPERATIONS (Eager — trigger the pipeline, return a result)
+================================================================================
+
+------------------------------------------------------------------------
+forEach(Consumer)         — iterate, no return value
+------------------------------------------------------------------------
+List.of("a","b","c").stream().forEach(System.out::println);
+
+------------------------------------------------------------------------
+toList() — Java 16+       — collects to unmodifiable List
+collect(Collectors...)    — collect to collection/map/string
+------------------------------------------------------------------------
+// toList() — clean shorthand
+List<Integer> doubled = Stream.of(1, 2, 3).map(x -> x * 2).toList();
+
+// collect to mutable list
+List<String> result = stream.collect(Collectors.toList());
+
+// collect to Set
+Set<String> unique = stream.collect(Collectors.toSet());
+
+// joining
+String joined = Stream.of("Java","is","fun")
+                      .collect(Collectors.joining(" "));
+// "Java is fun"
+
+// groupingBy
+Map<Integer, List<String>> byLength =
+    List.of("hi", "hey", "hello", "world")
+        .stream()
+        .collect(Collectors.groupingBy(String::length));
+// {2=[hi], 3=[hey], 5=[hello, world]}
+
+// counting
+long count = stream.collect(Collectors.counting());
+
+------------------------------------------------------------------------
+count()                   — number of elements
+------------------------------------------------------------------------
+long n = Stream.of(1, 2, 3, 4).filter(x -> x > 2).count(); // 2
+
+------------------------------------------------------------------------
+reduce(identity, BinaryOperator) — fold elements into a single value
+------------------------------------------------------------------------
+int sum = Stream.of(1, 2, 3, 4, 5).reduce(0, Integer::sum); // 15
+
+Optional<Integer> product = Stream.of(1,2,3,4).reduce((a, b) -> a * b);
+
+------------------------------------------------------------------------
+min(Comparator) / max(Comparator) — returns Optional<T>
+------------------------------------------------------------------------
+Optional<String> shortest =
+    List.of("apple","fig","banana")
+        .stream()
+        .min(Comparator.comparingInt(String::length));
+// Optional[fig]
+
+------------------------------------------------------------------------
+findFirst() / findAny()   — returns Optional<T>
+------------------------------------------------------------------------
+Optional<String> first = Stream.of("a","b","c").findFirst(); // Optional[a]
+
+------------------------------------------------------------------------
+anyMatch / allMatch / noneMatch — short-circuit, return boolean
+------------------------------------------------------------------------
+boolean hasEven  = Stream.of(1,3,4,5).anyMatch(n -> n % 2 == 0);  // true
+boolean allEven  = Stream.of(2,4,6).allMatch(n -> n % 2 == 0);    // true
+boolean noneNeg  = Stream.of(1,2,3).noneMatch(n -> n < 0);        // true
+
+------------------------------------------------------------------------
+toArray()                 — convert to array
+------------------------------------------------------------------------
+Object[] arr   = Stream.of(1,2,3).toArray();
+Integer[] arr2 = Stream.of(1,2,3).toArray(Integer[]::new);
+
+------------------------------------------------------------------------
+summaryStatistics() — on primitive streams
+------------------------------------------------------------------------
+IntSummaryStatistics stats =
+    IntStream.of(1,2,3,4,5).summaryStatistics();
+// count=5, sum=15, min=1, max=5, average=3.0
+
+================================================================================
+6. COMMON PATTERNS & EXAMPLES
+================================================================================
+
+-- Pattern 1: Filter + Map + Collect --
+List<String> longFruits =
+    List.of("apple","fig","banana","kiwi","watermelon")
+        .stream()
+        .filter(s -> s.length() > 4)
+        .map(String::toUpperCase)
+        .toList();
+// [APPLE, BANANA, WATERMELON]
+
+-- Pattern 2: FlatMap (words in sentences) --
+List<String> sentences = List.of("hello world", "java streams");
+List<String> words = sentences.stream()
+    .flatMap(s -> Arrays.stream(s.split(" ")))
+    .toList();
+// [hello, world, java, streams]
+
+-- Pattern 3: GroupBy + Count --
+Map<Boolean, Long> evenOdd =
+    IntStream.rangeClosed(1, 10)
+             .boxed()
+             .collect(Collectors.partitioningBy(
+                 n -> n % 2 == 0, Collectors.counting()));
+// {false=5, true=5}
+
+-- Pattern 4: Find Top N --
+List<Integer> top3 =
+    Stream.of(5,1,8,3,9,2,7)
+          .sorted(Comparator.reverseOrder())
+          .limit(3)
+          .toList();
+// [9, 8, 7]
+
+-- Pattern 5: Optional chaining from stream --
+Optional<String> first = List.of("Alice","Bob")
+    .stream()
+    .filter(s -> s.startsWith("A"))
+    .findFirst();
+first.ifPresent(System.out::println); // Alice
+
+-- Pattern 6: Nested grouping (groupingBy + groupingBy) --
+record Employee(String dept, String name, int salary) {}
+
+List<Employee> employees = List.of(
+    new Employee("Eng", "Alice", 90000),
+    new Employee("Eng", "Bob",   80000),
+    new Employee("HR",  "Carol", 70000)
+);
+
+Map<String, Long> countByDept =
+    employees.stream()
+             .collect(Collectors.groupingBy(
+                 Employee::dept, Collectors.counting()));
+// {Eng=2, HR=1}
+
+================================================================================
+7. JAVA 9–21 STREAM ENHANCEMENTS
+================================================================================
+
+Java 9:
+  - Stream.iterate(seed, predicate, next)  — bounded iterate
+  - Stream.ofNullable(value)               — empty stream if null
+  - takeWhile(predicate)
+  - dropWhile(predicate)
+
+Java 10:
+  - No Stream-specific changes (but var works in lambdas from Java 11)
+
+Java 11:
+  - (var x) -> ... allowed in lambda params with annotations
+
+Java 16:
+  - Stream.toList()   — shorthand for .collect(Collectors.toUnmodifiableList())
+  - mapMulti(BiConsumer) — like flatMap but imperative style
+
+Java 21:
+  - Sequenced Collections (SequencedCollection, SequencedSet, SequencedMap)
+    -> .getFirst(), .getLast(), .reversed() on Lists, Deques, etc.
+  - Gathering API (Preview in Java 22, but experimental direction):
+    Collectors.teeing() — splits stream into two collectors and merges results
+
+Example — Stream.ofNullable():
+  String val = null;
+  Stream.ofNullable(val).forEach(System.out::println); // no output, no NPE
+
+Example — mapMulti() (Java 16+):
+  Stream.of(1, 2, 3)
+        .<Integer>mapMulti((n, consumer) -> {
+            consumer.accept(n);
+            consumer.accept(n * 10);
+        })
+        .toList();
+  // [1, 10, 2, 20, 3, 30]
+
+Example — Collectors.teeing() (Java 12+):
+  record MinMax(int min, int max) {}
+  MinMax result = Stream.of(5,1,8,3)
+      .collect(Collectors.teeing(
+          Collectors.minBy(Integer::compareTo),
+          Collectors.maxBy(Integer::compareTo),
+          (min, max) -> new MinMax(min.get(), max.get())
+      ));
+  // MinMax[min=1, max=8]
+
+================================================================================
+8. PARALLEL STREAMS
+================================================================================
+
+Convert to parallel:
+  list.parallelStream()
+  stream.parallel()
+
+Convert back to sequential:
+  parallelStream.sequential()
+
+Example:
+  long sum = LongStream.rangeClosed(1, 1_000_000)
+                       .parallel()
+                       .sum();
+
+When to USE parallel streams:
+  ✔ Large datasets (generally 10,000+ elements)
+  ✔ CPU-bound, stateless operations
+  ✔ No shared mutable state
+
+When to AVOID parallel streams:
+  ✘ Small collections (overhead outweighs benefit)
+  ✘ I/O-bound operations
+  ✘ Order-sensitive operations (findFirst, forEachOrdered)
+  ✘ Operations with side effects (mutating shared state)
+
+Note: Uses ForkJoinPool.commonPool() by default.
+
+================================================================================
+9. INTERVIEW QUESTIONS & ANSWERS
+================================================================================
+
+Q1. What is the difference between Collection and Stream?
+A:  Collection stores data; Stream processes data.
+    Collections are eagerly evaluated; Streams are lazily evaluated.
+    You can iterate a Collection multiple times; a Stream can be consumed only once.
+
+Q2. What does "lazy evaluation" mean in Streams?
+A:  Intermediate operations (filter, map, etc.) are not executed until a terminal
+    operation is called. This allows the JVM to optimize the pipeline (e.g., short-
+    circuit, fuse operations).
+
+Q3. What is the difference between map() and flatMap()?
+A:  map() applies a function that returns one element per input element (1-to-1).
+    flatMap() applies a function that returns a Stream per element and flattens all
+    those streams into one (1-to-many, then flatten).
+
+    Example:
+      map:     ["hello", "world"] -> [5, 5]       (length of each word)
+      flatMap: [["a","b"],["c"]]  -> ["a","b","c"] (flatten nested lists)
+
+Q4. What is the difference between findFirst() and findAny()?
+A:  findFirst() always returns the first element in encounter order.
+    findAny() may return any element — useful in parallel streams for better
+    performance since it doesn't need to track order.
+
+Q5. Can you reuse a Stream?
+A:  NO. Once a terminal operation is called, the stream is consumed. Attempting to
+    reuse it throws IllegalStateException: stream has already been operated upon or closed.
+
+Q6. What is the difference between intermediate and terminal operations?
+A:  Intermediate: lazy, return a new Stream (filter, map, sorted, distinct, peek...)
+    Terminal:      eager, trigger the pipeline, return a result or side-effect
+                   (collect, forEach, reduce, count, min, max, findFirst...)
+
+Q7. What is reduce() and how does it work?
+A:  reduce() folds all elements into a single value using an associative function.
+    reduce(identity, accumulator)
+    identity: the initial value (e.g., 0 for sum, 1 for product)
+    accumulator: (partial_result, element) -> new_partial_result
+    Example: Stream.of(1,2,3,4).reduce(0, Integer::sum) -> 10
+
+Q8. What is Collectors.groupingBy()?
+A:  A collector that groups stream elements by a classifier function into a Map.
+    Example: groupingBy(String::length) groups strings by their length.
+    You can chain a downstream collector: groupingBy(f, Collectors.counting())
+
+Q9. When should you use parallel streams?
+A:  For large datasets with CPU-intensive, stateless, order-independent operations.
+    Avoid for small datasets, I/O tasks, or operations requiring shared mutable state.
+
+Q10. What is the difference between peek() and forEach()?
+A:  peek() is an intermediate operation — it performs an action on each element
+    but returns the stream, allowing further operations. Primarily used for debugging.
+    forEach() is a terminal operation — it consumes the stream.
+
+Q11. What does Stream.iterate() do? How is Java 9's version different?
+A:  Java 8: Stream.iterate(seed, f) — infinite stream. Requires limit() to terminate.
+    Java 9: Stream.iterate(seed, predicate, f) — terminates when predicate is false.
+    Java 9 version is safer and more concise for bounded sequences.
+
+Q12. What is the difference between Collectors.toList() and Stream.toList()?
+A:  Collectors.toList() returns a mutable list (implementation unspecified).
+    Stream.toList() (Java 16+) returns an UNMODIFIABLE list. Preferred in modern Java.
+
+Q13. What is Collectors.teeing()?
+A:  Added in Java 12. Passes each element to TWO collectors simultaneously, then
+    merges their results using a merger function. Useful to compute two aggregations
+    in a single pass (e.g., min + max, sum + count).
+
+Q14. What are primitive streams and why do they exist?
+A:  IntStream, LongStream, DoubleStream avoid boxing/unboxing overhead.
+    They also provide specialized terminal ops: sum(), average(), summaryStatistics().
+
+Q15. What is short-circuit evaluation in Streams?
+A:  Some operations stop processing as soon as a result can be determined:
+    - anyMatch: stops at first true
+    - allMatch: stops at first false
+    - noneMatch: stops at first true
+    - findFirst/findAny: stops at first match
+    - limit(n): stops after n elements
+
+================================================================================
+QUICK REFERENCE — STREAM PIPELINE STRUCTURE
+================================================================================
+
+  [Source]         ──►  [Intermediate Ops ...]  ──►  [Terminal Op]
+  list.stream()         .filter(...)                 .collect(...)
+  Stream.of(...)        .map(...)                    .forEach(...)
+  IntStream.range(...)  .sorted()                    .reduce(...)
+  Files.lines(path)     .distinct()                  .count()
+                        .limit(n)                    .findFirst()
+                        .skip(n)                     .anyMatch(...)
+                        .flatMap(...)                .toList()
+                        .peek(...)
+
+================================================================================

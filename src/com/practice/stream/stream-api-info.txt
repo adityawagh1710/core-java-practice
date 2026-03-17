@@ -1,0 +1,229 @@
+============================================================
+JAVA STREAM API NOTES
+============================================================
+
+1. INTRODUCTION TO STREAM API
+-----------------------------
+• Introduced in Java 8 as part of java.util.stream package.
+• A Stream<T> is a sequence of elements supporting sequential and parallel aggregate operations.
+• Declarative way to process collections (filter, map, reduce) instead of imperative loops.
+• Key Characteristics (from Oracle Java 21 docs):
+  - Lazy evaluation: Intermediate operations are NOT executed until a terminal operation is invoked.
+  - Pipeline: Source → 0+ intermediate ops → 1 terminal op.
+  - One-time use only: Cannot reuse a stream after terminal operation.
+  - Supports parallel processing via parallelStream() or .parallel().
+  - Non-interfering & stateless lambdas recommended (especially for parallel).
+  - AutoCloseable for I/O-backed streams (e.g., Files.lines()).
+
+Java 21 specifics:
+- No brand-new Stream methods added in Java 21.
+- All enhancements from previous releases are stable:
+  - Java 9: takeWhile(), dropWhile(), ofNullable()
+  - Java 16: toList() + mapMulti() / mapMultiToInt etc.
+
+============================================================  
+
+2. CREATING STREAMS
+-------------------
+Stream.empty()
+Stream.of(T... values)
+Collection.stream() / parallelStream()
+Arrays.stream(array)
+Stream.builder()
+Stream.generate(Supplier)          // infinite → must limit
+Stream.iterate(seed, UnaryOperator) // or with predicate since Java 9
+Stream.ofNullable(value)           // Java 9+
+Files.lines(Path) / Pattern.splitAsStream()
+IntStream.range() / rangeClosed() etc. for primitives
+
+============================================================
+
+
+3. INTERMEDIATE OPERATIONS (return Stream, lazy)
+------------------------------------------------
+filter(Predicate)
+map(Function)
+flatMap(Function< T, Stream<R> >)
+mapMulti(BiConsumer<T, Consumer<R>>)  // Java 16+ – efficient alternative to flatMap (no intermediate streams)
+sorted() / sorted(Comparator)
+distinct()
+limit(long)
+skip(long)
+takeWhile(Predicate)   // Java 9+
+dropWhile(Predicate)   // Java 9+
+peek(Consumer)         // mainly for debugging
+
+============================================================
+
+
+4. TERMINAL OPERATIONS (trigger execution)
+-------------------------------------------
+forEach / forEachOrdered
+collect(Collector) or collect(supplier, accumulator, combiner)
+reduce() overloads
+count()
+min / max
+anyMatch / allMatch / noneMatch
+findFirst / findAny
+toList()               // Java 16+ – returns unmodifiable List
+toArray() / toArray(IntFunction)
+
+============================================================
+
+
+5. COLLECTORS (java.util.stream.Collectors)
+-------------------------------------------
+toList() / toSet() / toCollection()
+toMap()
+groupingBy()
+partitioningBy()
+joining()
+reducing()
+summarizingInt/Double/Long
+teeing() (Java 12+)
+
+============================================================
+
+
+6. PRIMITIVE STREAMS
+--------------------
+IntStream, LongStream, DoubleStream
+mapToInt / mapToLong / mapToDouble
+flatMapToInt etc.
+sum(), average(), summaryStatistics()
+
+
+============================================================
+
+7. PARALLEL STREAMS
+-------------------
+list.parallelStream()
+stream.parallel()
+Use only when data is large AND operations are stateless & non-interfering.
+Common ForkJoinPool is used.
+
+============================================================
+
+8. JAVA 21 / RECENT FEATURES EXAMPLES
+-------------------------------------
+mapMulti (Java 16+, stable in 21) – map one element to 0, 1 or many outputs 
+without creating intermediate Stream objects.
+
+Example:
+List<Integer> numbers = List.of(1, 2, 3);
+List<Integer> result = numbers.stream()
+    .<Integer>mapMulti((n, consumer) -> {
+        consumer.accept(n);        // emit original
+        consumer.accept(n * 10);   // emit transformed
+    })
+    .toList(); // [1,10,2,20,3,30]
+
+toList() (stable since Java 16):
+List<String> upper = names.stream()
+    .map(String::toUpperCase)
+    .toList(); // immutable list
+
+============================================================
+
+9. COMPLETE WORKING EXAMPLES
+----------------------------
+
+Example 1: Filter + Map + Collect (classic)
+List<Employee> employees = ...; // assume List<Employee> with name, salary, dept
+List<String> highSalaryNames = employees.stream()
+    .filter(e -> e.getSalary() > 50000)
+    .map(Employee::getName)
+    .toList();
+
+Example 2: flatMap
+List<List<String>> nested = List.of(
+    List.of("a","b"),
+    List.of("c","d")
+);
+List<String> flat = nested.stream()
+    .flatMap(List::stream)
+    .collect(Collectors.toList()); // ["a","b","c","d"]
+
+Example 3: Grouping + Counting
+Map<String, Long> countByDept = employees.stream()
+    .collect(Collectors.groupingBy(
+        Employee::getDepartment,
+        Collectors.counting()
+    ));
+
+Example 4: Reduce
+int totalSalary = employees.stream()
+    .mapToInt(Employee::getSalary)
+    .sum(); // or .reduce(0, Integer::sum)
+
+Example 5: takeWhile / dropWhile (Java 9+)
+Stream.of(1,2,3,4,5,6)
+    .takeWhile(n -> n < 4)
+    .forEach(System.out::println); // 1 2 3
+
+============================================================    
+
+10. BEST PRACTICES & COMMON PITFALLS
+------------------------------------
+• Put reducing operations (filter, limit, distinct) early.
+• Avoid side-effects in lambdas (except peek for debug).
+• Prefer method references over lambdas when possible.
+• Use parallelStream() only after profiling.
+• Always consume the stream (one terminal op only).
+• For large data or I/O, consider closing the stream.
+• mapMulti > flatMap when you want to avoid creating many small streams.
+
+============================================================
+
+11. INTERVIEW QUESTIONS (with short answers)
+--------------------------------------------
+Q1. What is the difference between intermediate and terminal operations?
+A: Intermediate are lazy & return Stream. Terminal trigger execution and produce result/side-effect.
+
+Q2. Why is Stream lazy?
+A: Allows short-circuiting (e.g., findFirst stops early) and optimization.
+
+Q3. Difference between stream() and parallelStream()?
+A: sequential vs multi-threaded using ForkJoinPool. Not always faster.
+
+Q4. Can you reuse a Stream?
+A: No – IllegalStateException after terminal op.
+
+Q5. What is mapMulti and when to use it?
+A: Java 16+ method to emit 0–many elements per input without intermediate Stream overhead. Better than flatMap for performance.
+
+Q6. Explain Collectors.toList() vs Stream.toList() (Java 16+)
+A: Stream.toList() returns unmodifiable List directly. Shorter and clearer.
+
+Q7. Difference between reduce() and collect()?
+A: reduce produces single value (immutable reduction). collect is mutable reduction into container.
+
+Q8. How does takeWhile differ from filter?
+A: takeWhile stops at first failure (prefix). filter checks every element.
+
+Q9. What happens if you call forEach on parallel stream?
+A: Order is not guaranteed (use forEachOrdered for order).
+
+Q10. Name 3 short-circuiting operations.
+A: limit, findFirst, anyMatch, takeWhile etc.
+
+Q11. How to convert Stream to List before Java 16?
+A: .collect(Collectors.toList())
+
+Q12. What is peek() used for?
+A: Debugging – perform action without changing stream.
+
+Q13. Can Stream be created from null?
+A: Use Stream.ofNullable() (Java 9+) to avoid NPE.
+
+Q14. Explain groupingBy vs partitioningBy.
+A: groupingBy – Map<K, List<T>> by classifier. partitioningBy – Map<Boolean, List<T>> by Predicate.
+
+Q15. Real-world: How would you find top 3 salaries using Stream?
+A: employees.stream()
+    .sorted(Comparator.comparingInt(Employee::getSalary).reversed())
+    .limit(3)
+    .map(Employee::getName)
+    .toList();
+
+============================================================

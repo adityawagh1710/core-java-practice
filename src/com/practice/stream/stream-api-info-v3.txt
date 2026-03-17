@@ -1,0 +1,107 @@
+Java Stream API - Advanced Notes
+
+  --------------------------------------------------
+  1. Advanced Concepts
+  --------------------------------------------------
+
+flatMap(): Used to flatten nested structures
+
+Example: list.stream() .flatMap(l -> l.stream())
+.forEach(System.out::println);
+
+peek(): Used for debugging
+
+list.stream() .peek(x -> System.out.println(x)) .map(x -> x * 2)
+.toList();
+
+Optional with Streams: Optional max =
+list.stream().max(Integer::compareTo);
+
+  --------------------------------------------------
+  2. Collectors Advanced
+  --------------------------------------------------
+
+groupingBy(): .collect(Collectors.groupingBy(String::length))
+
+partitioningBy(): .collect(Collectors.partitioningBy(n -> n % 2 == 0))
+
+joining(): .collect(Collectors.joining(“,”))
+
+counting(): .collect(Collectors.counting())
+
+  --------------------------------------------------
+  3. Custom Object Example
+  --------------------------------------------------
+
+class Employee { String name; String dept; int salary; }
+
+Group by dept: list.stream().collect(Collectors.groupingBy(e ->
+e.dept));
+
+Max salary: list.stream().max((a,b) -> a.salary - b.salary);
+
+  --------------------------------------------------
+  4. Parallel Streams
+  --------------------------------------------------
+
+Use when: - Large data - CPU tasks
+
+Avoid when: - Small data - IO tasks
+
+Example: list.parallelStream().forEach(System.out::println);
+
+  --------------------------------------------------
+  5. Real Use Cases
+  --------------------------------------------------
+
+Remove duplicates + sort: list.stream().distinct().sorted().toList();
+
+Top N: list.stream().sorted((a,b) -> b - a).limit(2);
+
+List to Map: .collect(Collectors.toMap(s -> s, s -> s.length()));
+
+  --------------------------------------------------
+  6. Common Mistakes
+  --------------------------------------------------
+
+Reusing stream: Stream s = list.stream(); s.forEach(…); s.forEach(…); //
+Error
+
+Modifying source: list.stream().forEach(list::remove); // Bad
+
+  --------------------------------------------------
+  7. Interview Questions
+  --------------------------------------------------
+
+Q: Why streams lazy? A: Execute only when terminal operation is called
+
+Q: map vs flatMap? A: map = one-to-one, flatMap = flatten
+
+Q: collect vs reduce? A: collect = mutable, reduce = immutable
+
+Q: Stream thread-safe? A: No
+
+Q: Short-circuit? A: Stops early (findFirst, anyMatch)
+
+  --------------------------------------------------
+  8. Performance Tips
+  --------------------------------------------------
+
+-   Use primitive streams
+-   Avoid boxing
+-   Use parallel carefully
+
+  --------------------------------------------------
+  9. Practice Problems
+  --------------------------------------------------
+
+Sum of even numbers: list.stream().filter(n -> n % 2 == 0).mapToInt(n ->
+n).sum();
+
+Find duplicates: Set set = new HashSet<>(); list.stream().filter(n ->
+!set.add(n)).forEach(System.out::println);
+
+Character frequency: “java”.chars() .mapToObj(c -> (char)c)
+.collect(Collectors.groupingBy(c -> c, Collectors.counting()));
+
+------------------------------------------------------------------------

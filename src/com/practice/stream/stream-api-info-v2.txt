@@ -1,0 +1,108 @@
+Java Stream API - Complete Notes
+
+  --------------------------------------------------
+  1. What is Stream API?
+  --------------------------------------------------
+  Stream API is used to process collections in a
+  functional and declarative way.
+
+  Key Points: - Does not store data - Processes
+  data - Supports filtering, mapping, sorting,
+  reducing
+  --------------------------------------------------
+
+2. Why Use Stream API?
+
+-   Cleaner code
+-   Less boilerplate
+-   Internal iteration
+-   Easy parallel processing
+
+  --------------------------------------------------
+  3. Stream Pipeline
+  --------------------------------------------------
+  Source -> Intermediate -> Terminal
+
+  Example: list.stream() .filter(x -> x > 5) .map(x
+  -> x * 2) .forEach(System.out::println);
+  --------------------------------------------------
+
+4. Types of Operations
+
+Intermediate: filter, map, sorted, distinct, limit, skip
+Terminal: forEach, collect, count, reduce
+
+  --------------------------------------------------
+  5. Creating Streams
+  --------------------------------------------------
+  From List: List list = List.of(“A”,“B”,“C”);
+
+  From Array: Arrays.stream(arr);
+
+  From Stream.of(): Stream.of(1,2,3);
+  --------------------------------------------------
+
+6. Common Examples
+
+filter(): nums.stream().filter(n -> n % 2 == 0);
+
+map(): nums.stream().map(n -> n * n);
+
+sorted(): list.stream().sorted();
+
+distinct(): list.stream().distinct();
+
+  --------------------------------------------------
+  7. Collectors
+  --------------------------------------------------
+  .collect(Collectors.toList())
+
+  --------------------------------------------------
+
+8. reduce()
+
+nums.stream().reduce(0, (a,b) -> a + b);
+
+  --------------------------------------------------
+  9. find & match
+  --------------------------------------------------
+  findFirst(), anyMatch(), allMatch()
+
+  --------------------------------------------------
+
+10. Parallel Stream
+
+nums.parallelStream().forEach(System.out::println);
+
+  --------------------------------------------------
+  11. Real Example
+  --------------------------------------------------
+  employees.stream() .filter(e -> e.salary > 4000)
+  .map(e -> e.name) .forEach(System.out::println);
+
+  --------------------------------------------------
+
+12. Characteristics
+
+-   Lazy
+-   Immutable
+-   Functional
+
+  --------------------------------------------------
+  13. Stream vs Collection
+  --------------------------------------------------
+  Collection = stores data Stream = processes data
+
+  --------------------------------------------------
+
+14. Interview Questions
+
+Q: What is Stream API? A: Data processing framework
+
+Q: map vs filter? A: filter selects, map transforms
+
+Q: Can we reuse stream? A: No
+
+Q: What is reduce? A: Aggregation
+
+------------------------------------------------------------------------
