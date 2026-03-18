@@ -1,0 +1,184 @@
+Java Collectors (Stream API)
+==============================================================
+
+Core Idea
+─────────
+• Collectors are used mainly with stream .collect(Collector)
+• They define how to accumulate/mutate/combine stream elements into a final result
+• Most come from static factory methods in java.util.stream.Collectors
+• Very common in production code and interviews
+
+Static Import Tip (makes code cleaner)
+import static java.util.stream.Collectors.*;
+
+1. Basic Collectors – to collections
+==============================================================
+toList()             → List<T> (mutable ArrayList by default)
+toSet()              → Set<T>  (HashSet)
+toUnmodifiableList() → List<T> immutable (Java 10+)
+toUnmodifiableSet()  → Set<T> immutable
+toCollection(Supplier) → custom collection e.g. LinkedList::new, PriorityQueue::new
+
+Example:
+List<String> names = List.of("Anna", "Bob", "Charlie", "David");
+
+List<String> list   = names.stream().collect(toList());
+Set<String>  set    = names.stream().collect(toSet());
+List<String> unmod  = names.stream().collect(toUnmodifiableList());
+
+2. toMap – single key/value
+==============================================================
+toMap(keyMapper, valueMapper)
+toMap(keyMapper, valueMapper, mergeFunction)   ← handles duplicate keys
+toMap(keyMapper, valueMapper, mergeFunction, mapSupplier)
+
+Common patterns:
+Map<String, Integer> nameToLength = names.stream()
+    .collect(toMap(
+        identity(),           // key = the element itself
+        String::length
+    ));
+
+// Duplicate key example (keep first / last / sum / etc.)
+Map<String, Employee> byId = employees.stream()
+    .collect(toMap(
+        Employee::getId,
+        identity(),
+        (old, neu) -> old       // keep old on conflict
+        // or (old, neu) -> neu
+        // or (old, neu) -> old.getSalary() + neu.getSalary()
+    ));
+
+3. groupingBy – the #1 interview collector
+==============================================================
+groupingBy(classifier)                            → Map<K, List<T>>
+groupingBy(classifier, downstream)                → custom aggregation
+
+Most frequent downstream collectors:
+  counting()           → Map<K, Long>
+  summingInt/Long/Double(ToInt/Long/DoubleFunction)
+  averagingInt/Long/Double
+  maxBy/minBy(Comparator)
+  reducing(initial, accumulator) / reducing(accumulator)
+  joining() / joining(delimiter) / joining(del, prefix, suffix)
+  mapping(mapper, downstream)   ← transform before aggregating
+
+Examples:
+
+// Group employees by department
+Map<String, List<Employee>> byDept = employees.stream()
+    .collect(groupingBy(Employee::getDepartment));
+
+// Count per department
+Map<String, Long> countByDept = employees.stream()
+    .collect(groupingBy(Employee::getDepartment, counting()));
+
+// Average salary per department
+Map<String, Double> avgSalary = employees.stream()
+    .collect(groupingBy(
+        Employee::getDepartment,
+        averagingDouble(Employee::getSalary)
+    ));
+
+// Top earner per department
+Map<String, Optional<Employee>> topByDept = employees.stream()
+    .collect(groupingBy(
+        Employee::getDepartment,
+        maxBy(Comparator.comparingDouble(Employee::getSalary))
+    ));
+
+// Multi-level grouping (department → city → list)
+Map<String, Map<String, List<Employee>>> byDeptAndCity = employees.stream()
+    .collect(groupingBy(
+        Employee::getDepartment,
+        groupingBy(Employee::getCity)
+    ));
+
+4. partitioningBy – special case of groupingBy (boolean key)
+==============================================================
+partitioningBy(Predicate)                  → Map<Boolean, List<T>>
+partitioningBy(Predicate, downstream)
+
+Example:
+Map<Boolean, List<Integer>> evenOdd = numbers.stream()
+    .collect(partitioningBy(n -> n % 2 == 0));
+
+// With downstream
+Map<Boolean, Long> countEvenOdd = numbers.stream()
+    .collect(partitioningBy(n -> n % 2 == 0, counting()));
+
+5. Other very useful collectors
+==============================================================
+joining() / joining(", ") / joining(", ", "[", "]")
+counting()                  → long
+summingInt/toLong/toDouble
+summarizingInt/Long/Double  → Int/Long/DoubleSummaryStatistics (min,max,avg,count,sum)
+
+Example – statistics:
+DoubleSummaryStatistics stats = employees.stream()
+    .collect(summarizingDouble(Employee::getSalary));
+
+System.out.println(stats.getAverage());
+System.out.println(stats.getMax());
+
+6. Custom collector (rare but asked in senior interviews)
+==============================================================
+Collector<T, A, R> of(
+    Supplier<A> supplier,
+    BiConsumer<A,T> accumulator,
+    BinaryOperator<A> combiner,
+    Function<A,R> finisher,   // optional
+    Collector.Characteristics... characteristics
+)
+
+Characteristics: CONCURRENT, UNORDERED, IDENTITY_FINISH
+
+7. Interview Questions – Collectors focused (2025–2026 frequent)
+==============================================================
+Easy / Medium
+1. Difference between toList() vs toCollection(LinkedList::new)?
+2. When does toMap() throw IllegalStateException? How to fix?
+3. What is the default Map type returned by toMap() / groupingBy()?
+4. How to preserve insertion order in toMap() result? (LinkedHashMap::new)
+5. Explain groupingBy vs partitioningBy – when to use which?
+
+Medium / Hard
+6. How to group by two fields? (nested groupingBy)
+7. How to get top N per group? (e.g. top 3 salaries per dept)
+   Hint: collectingAndThen(groupingBy + toList, then sort & limit)
+8. Implement grouping + sum + sort by sum descending
+9. Difference between reducing() vs collect(reducing(...))?
+10. How to collect to a TreeMap sorted by key?
+11. What happens if you use parallelStream() with stateful collector? (e.g. bad merge function)
+12. Explain Collectors.mapping() use-case
+13. How would you collect names into a single String with prefix/suffix?
+14. Implement a collector that concatenates strings with limit of total length
+15. How to compute frequency map (like word count)?
+16. collectingAndThen() – what is it for? Give real example.
+17. Can you create a concurrent collector? When is it useful?
+
+Quick Code Snippets – Favorite Interview One-liners
+
+// Frequency map
+Map<String, Long> freq = words.stream()
+    .collect(groupingBy(identity(), counting()));
+
+// Sorted frequency descending
+List<Map.Entry<String, Long>> topWords = words.stream()
+    .collect(groupingBy(identity(), counting()))
+    .entrySet().stream()
+    .sorted(Map.Entry.<String,Long>comparingByValue().reversed())
+    .limit(10)
+    .toList();
+
+// Join with commas
+String csv = names.stream().collect(joining(", ", "Names: ", "."));
+
+Best Practices 2026
+───────────────────
+• Use static import Collectors.* to keep code clean
+• Prefer groupingBy + downstream over collect + forEach
+• Avoid side-effects in collectors
+• Be careful with parallel streams + non-concurrent maps
+• Use toUnmodifiableList/Set when result shouldn't change
+==============================================================

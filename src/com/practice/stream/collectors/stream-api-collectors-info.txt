@@ -1,0 +1,247 @@
+========================================
+JAVA COLLECTORS (Stream API)
+========================================
+
+1. What is Collectors?
+-----------------------
+Collectors is a utility class in java.util.stream package.
+
+It is used with Stream API to:
+- Transform data
+- Accumulate results
+- Convert streams into collections (List, Set, Map)
+
+Example:
+--------
+List<Integer> list = Arrays.asList(1,2,3,4);
+
+List<Integer> result = list.stream()
+    .filter(x -> x > 2)
+    .collect(Collectors.toList());
+
+----------------------------------------
+2. Why Collectors?
+----------------------------------------
+- Convert Stream → Collection
+- Perform grouping, partitioning
+- Perform aggregation (sum, avg, count)
+
+----------------------------------------
+3. Common Collectors Methods
+----------------------------------------
+
+(A) toList()
+------------
+List<String> names = list.stream()
+    .map(x -> "Num " + x)
+    .collect(Collectors.toList());
+
+(B) toSet()
+-----------
+Set<Integer> set = list.stream()
+    .collect(Collectors.toSet());
+
+(C) toMap()
+-----------
+Map<Integer, String> map = list.stream()
+    .collect(Collectors.toMap(
+        x -> x,
+        x -> "Value " + x
+    ));
+
+----------------------------------------
+4. Grouping (VERY IMPORTANT)
+----------------------------------------
+
+groupingBy()
+-------------
+Group elements based on property.
+
+Example:
+--------
+class Employee {
+    String name;
+    String dept;
+}
+
+Map<String, List<Employee>> map =
+    empList.stream()
+           .collect(Collectors.groupingBy(e -> e.dept));
+
+----------------------------------------
+5. Partitioning
+----------------------------------------
+
+partitioningBy()
+----------------
+Split into TRUE / FALSE
+
+Example:
+--------
+Map<Boolean, List<Integer>> map =
+    list.stream()
+        .collect(Collectors.partitioningBy(x -> x % 2 == 0));
+
+----------------------------------------
+6. Counting
+----------------------------------------
+
+long count = list.stream()
+    .collect(Collectors.counting());
+
+----------------------------------------
+7. Summarizing
+----------------------------------------
+
+IntSummaryStatistics stats =
+    list.stream()
+        .collect(Collectors.summarizingInt(x -> x));
+
+System.out.println(stats.getSum());
+System.out.println(stats.getAverage());
+
+----------------------------------------
+8. Joining
+----------------------------------------
+
+List<String> names = Arrays.asList("A", "B", "C");
+
+String result = names.stream()
+    .collect(Collectors.joining(", "));
+
+Output:
+-------
+A, B, C
+
+----------------------------------------
+9. Mapping inside Collector
+----------------------------------------
+
+List<String> names =
+    empList.stream()
+           .collect(Collectors.mapping(
+               e -> e.name,
+               Collectors.toList()
+           ));
+
+----------------------------------------
+10. CollectingAndThen
+----------------------------------------
+
+List<String> unmodifiable =
+    list.stream()
+        .collect(Collectors.collectingAndThen(
+            Collectors.toList(),
+            Collections::unmodifiableList
+        ));
+
+----------------------------------------
+11. Custom Class Example (Real World)
+----------------------------------------
+
+class Employee {
+    int id;
+    String name;
+    String dept;
+    double salary;
+}
+
+List<Employee> list = Arrays.asList(
+    new Employee(1, "A", "IT", 70000),
+    new Employee(2, "B", "HR", 40000),
+    new Employee(3, "C", "IT", 90000)
+);
+
+(A) Group by Department
+------------------------
+Map<String, List<Employee>> map =
+    list.stream()
+        .collect(Collectors.groupingBy(e -> e.dept));
+
+(B) Count by Department
+-----------------------
+Map<String, Long> count =
+    list.stream()
+        .collect(Collectors.groupingBy(
+            e -> e.dept,
+            Collectors.counting()
+        ));
+
+(C) Average Salary by Department
+--------------------------------
+Map<String, Double> avg =
+    list.stream()
+        .collect(Collectors.groupingBy(
+            e -> e.dept,
+            Collectors.averagingDouble(e -> e.salary)
+        ));
+
+----------------------------------------
+12. Downstream Collectors
+----------------------------------------
+
+Example:
+--------
+Map<String, List<String>> namesByDept =
+    list.stream()
+        .collect(Collectors.groupingBy(
+            e -> e.dept,
+            Collectors.mapping(e -> e.name, Collectors.toList())
+        ));
+
+----------------------------------------
+13. Parallel Streams Note
+----------------------------------------
+Collectors work with parallel streams.
+
+Example:
+--------
+list.parallelStream()
+    .collect(Collectors.toList());
+
+----------------------------------------
+INTERVIEW QUESTIONS
+----------------------------------------
+
+Basic:
+------
+1. What is Collectors class?
+2. Difference between collect() and Collectors?
+3. What is groupingBy()?
+4. What is partitioningBy()?
+5. Difference between toList() and toSet()?
+
+Intermediate:
+-------------
+6. What is downstream collector?
+7. Difference between map() and mapping()?
+8. What is summarizingInt()?
+9. How does toMap() handle duplicate keys?
+
+Answer:
+-------
+Use merge function:
+Collectors.toMap(
+    keyMapper,
+    valueMapper,
+    (oldVal, newVal) -> oldVal
+)
+
+Advanced:
+---------
+10. Difference between groupingBy and partitioningBy?
+11. What is collectingAndThen()?
+12. Can Collectors be used with parallel streams?
+13. How to make immutable collection using Collectors?
+
+Tricky:
+-------
+14. What happens if duplicate keys in toMap()?
+    → Throws IllegalStateException
+
+15. Is Collectors thread-safe?
+    → Depends on collector (not all are)
+
+----------------------------------------
+END OF NOTES
+----------------------------------------

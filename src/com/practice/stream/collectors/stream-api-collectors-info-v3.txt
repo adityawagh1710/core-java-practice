@@ -1,0 +1,665 @@
+------------------------------------------------------------------------
+1. WHAT IS A COLLECTOR?
+------------------------------------------------------------------------
+
+A Collector is a recipe for accumulating stream elements into a result
+container (List, Set, Map, String, etc.).
+
+Used with the terminal operation:  stream.collect(Collector)
+
+Package: java.util.stream.Collectors
+
+The Collectors utility class provides 40+ built-in factory methods
+covering almost every collection need.
+
+A Collector internally works with 4 components:
+  - Supplier        → creates the result container (e.g., new ArrayList())
+  - Accumulator     → adds an element to the container
+  - Combiner        → merges two containers (used in parallel streams)
+  - Finisher        → optional final transform on the container
+
+You rarely implement Collector yourself — built-in ones cover most cases.
+
+
+------------------------------------------------------------------------
+2. COLLECTING TO BASIC COLLECTIONS
+------------------------------------------------------------------------
+
+Setup used in examples below:
+    List<String> names = List.of("Alice", "Bob", "Charlie", "Alice", "Dave");
+
+-------------------------------------
+2a. toList()
+    Collects into a mutable List (usually ArrayList).
+
+    List<String> result = names.stream()
+                               .collect(Collectors.toList());
+    // [Alice, Bob, Charlie, Alice, Dave]
+
+-------------------------------------
+2b. toUnmodifiableList()  (Java 10+)
+    Collects into an immutable List. Any add/remove throws
+    UnsupportedOperationException.
+
+    List<String> result = names.stream()
+                               .collect(Collectors.toUnmodifiableList());
+
+    Shortcut in Java 16+:
+    List<String> result = names.stream().toList(); // unmodifiable
+
+-------------------------------------
+2c. toSet()
+    Collects into a mutable Set — automatically removes duplicates.
+    Does NOT guarantee order.
+
+    Set<String> result = names.stream()
+                              .collect(Collectors.toSet());
+    // [Alice, Bob, Charlie, Dave]  (order not guaranteed)
+
+-------------------------------------
+2d. toUnmodifiableSet()  (Java 10+)
+    Immutable Set version.
+
+    Set<String> result = names.stream()
+                              .collect(Collectors.toUnmodifiableSet());
+
+-------------------------------------
+2e. toCollection(Supplier)
+    Collect into a specific Collection type of your choice.
+
+    // Collect into a LinkedList
+    LinkedList<String> linked = names.stream()
+        .collect(Collectors.toCollection(LinkedList::new));
+
+    // Collect into a TreeSet (sorted, no duplicates)
+    TreeSet<String> sorted = names.stream()
+        .collect(Collectors.toCollection(TreeSet::new));
+    // [Alice, Bob, Charlie, Dave]  (alphabetical order)
+
+
+------------------------------------------------------------------------
+3. COLLECTING TO MAP
+------------------------------------------------------------------------
+
+-------------------------------------
+3a. toMap(keyMapper, valueMapper)
+    Produces a Map<K, V>.
+
+    List<String> words = List.of("apple", "banana", "fig");
+
+    Map<String, Integer> wordLength = words.stream()
+        .collect(Collectors.toMap(
+            s -> s,           // key = the word itself
+            String::length    // value = its length
+        ));
+    // {apple=5, banana=6, fig=3}
+
+    ⚠️ DUPLICATE KEY EXCEPTION:
+    If two elements map to the same key, toMap() throws
+    IllegalStateException by default.
+
+-------------------------------------
+3b. toMap(keyMapper, valueMapper, mergeFunction)
+    The third argument resolves duplicate key conflicts.
+
+    List<String> words2 = List.of("apple", "apricot", "banana", "blueberry");
+
+    Map<Character, String> firstLetterMap = words2.stream()
+        .collect(Collectors.toMap(
+            s -> s.charAt(0),    // key = first letter
+            s -> s,              // value = the word
+            (existing, incoming) -> existing + ", " + incoming  // merge
+        ));
+    // {a=apple, apricot, b=banana, blueberry}
+
+-------------------------------------
+3c. toMap(keyMapper, valueMapper, mergeFunction, mapFactory)
+    The fourth argument controls the Map implementation.
+
+    // Use LinkedHashMap to preserve insertion order
+    Map<String, Integer> ordered = words.stream()
+        .collect(Collectors.toMap(
+            s -> s,
+            String::length,
+            (e, i) -> e,         // keep existing on conflict
+            LinkedHashMap::new
+        ));
+
+-------------------------------------
+3d. toUnmodifiableMap()  (Java 10+)
+
+    Map<String, Integer> immutable = words.stream()
+        .collect(Collectors.toUnmodifiableMap(s -> s, String::length));
+
+
+------------------------------------------------------------------------
+4. JOINING
+------------------------------------------------------------------------
+
+Collectors.joining() works only on Stream<String>.
+
+-------------------------------------
+4a. joining()  — no separator
+
+    String result = Stream.of("a", "b", "c")
+                          .collect(Collectors.joining());
+    // "abc"
+
+-------------------------------------
+4b. joining(delimiter)
+
+    String result = Stream.of("Alice", "Bob", "Charlie")
+                          .collect(Collectors.joining(", "));
+    // "Alice, Bob, Charlie"
+
+-------------------------------------
+4c. joining(delimiter, prefix, suffix)
+
+    String result = Stream.of("Alice", "Bob", "Charlie")
+                          .collect(Collectors.joining(", ", "[", "]"));
+    // "[Alice, Bob, Charlie]"
+
+Real-world use — build a SQL IN clause:
+    String ids = List.of(1, 2, 3).stream()
+        .map(String::valueOf)
+        .collect(Collectors.joining(", ", "WHERE id IN (", ")"));
+    // "WHERE id IN (1, 2, 3)"
+
+
+------------------------------------------------------------------------
+5. COUNTING
+------------------------------------------------------------------------
+
+    long count = Stream.of("a", "b", "c", "d")
+                       .collect(Collectors.counting());
+    // 4
+
+    // counting() shines as a DOWNSTREAM collector inside groupingBy
+    Map<Integer, Long> countByLength = Stream.of("a", "bb", "cc", "ddd")
+        .collect(Collectors.groupingBy(String::length, Collectors.counting()));
+    // {1=1, 2=2, 3=1}
+
+
+------------------------------------------------------------------------
+6. SUMMING, AVERAGING, SUMMARIZING
+------------------------------------------------------------------------
+
+Setup:
+    record Employee(String name, String dept, int salary) {}
+
+    List<Employee> employees = List.of(
+        new Employee("Alice",   "Engineering", 90000),
+        new Employee("Bob",     "Engineering", 85000),
+        new Employee("Charlie", "Marketing",   70000),
+        new Employee("Diana",   "Marketing",   75000),
+        new Employee("Eve",     "HR",          65000)
+    );
+
+-------------------------------------
+6a. summingInt() / summingLong() / summingDouble()
+
+    int totalSalary = employees.stream()
+        .collect(Collectors.summingInt(Employee::salary));
+    // 385000
+
+    // Per department total salary (downstream)
+    Map<String, Integer> salaryByDept = employees.stream()
+        .collect(Collectors.groupingBy(
+            Employee::dept,
+            Collectors.summingInt(Employee::salary)
+        ));
+    // {Engineering=175000, Marketing=145000, HR=65000}
+
+-------------------------------------
+6b. averagingInt() / averagingLong() / averagingDouble()
+
+    double avgSalary = employees.stream()
+        .collect(Collectors.averagingInt(Employee::salary));
+    // 77000.0
+
+    Map<String, Double> avgByDept = employees.stream()
+        .collect(Collectors.groupingBy(
+            Employee::dept,
+            Collectors.averagingInt(Employee::salary)
+        ));
+    // {Engineering=87500.0, Marketing=72500.0, HR=65000.0}
+
+-------------------------------------
+6c. summarizingInt() / summarizingLong() / summarizingDouble()
+    Returns IntSummaryStatistics with count, sum, min, max, average.
+
+    IntSummaryStatistics stats = employees.stream()
+        .collect(Collectors.summarizingInt(Employee::salary));
+
+    System.out.println(stats.getCount());    // 5
+    System.out.println(stats.getSum());      // 385000
+    System.out.println(stats.getMin());      // 65000
+    System.out.println(stats.getMax());      // 90000
+    System.out.println(stats.getAverage());  // 77000.0
+
+
+------------------------------------------------------------------------
+7. groupingBy() — THE MOST POWERFUL COLLECTOR
+------------------------------------------------------------------------
+
+Collects elements into Map<K, List<T>> based on a classifier function.
+
+-------------------------------------
+7a. groupingBy(classifier)  → Map<K, List<T>>
+
+    Map<String, List<Employee>> byDept = employees.stream()
+        .collect(Collectors.groupingBy(Employee::dept));
+    // {Engineering=[Alice, Bob], Marketing=[Charlie, Diana], HR=[Eve]}
+
+-------------------------------------
+7b. groupingBy(classifier, downstream)
+    The downstream collector processes each group's List further.
+
+    // Count per department
+    Map<String, Long> countByDept = employees.stream()
+        .collect(Collectors.groupingBy(
+            Employee::dept,
+            Collectors.counting()
+        ));
+    // {Engineering=2, Marketing=2, HR=1}
+
+    // Get names per department (mapping downstream)
+    Map<String, List<String>> namesByDept = employees.stream()
+        .collect(Collectors.groupingBy(
+            Employee::dept,
+            Collectors.mapping(Employee::name, Collectors.toList())
+        ));
+    // {Engineering=[Alice, Bob], Marketing=[Charlie, Diana], HR=[Eve]}
+
+    // Max salary per department
+    Map<String, Optional<Employee>> maxSalaryByDept = employees.stream()
+        .collect(Collectors.groupingBy(
+            Employee::dept,
+            Collectors.maxBy(Comparator.comparingInt(Employee::salary))
+        ));
+
+-------------------------------------
+7c. groupingBy(classifier, mapFactory, downstream)
+    Third argument controls the Map implementation.
+
+    // Use TreeMap so departments are sorted alphabetically
+    Map<String, Long> sorted = employees.stream()
+        .collect(Collectors.groupingBy(
+            Employee::dept,
+            TreeMap::new,
+            Collectors.counting()
+        ));
+    // {Engineering=2, HR=1, Marketing=2}  ← alphabetical order
+
+-------------------------------------
+7d. Multi-level groupingBy (nested)
+
+    // Group by department, then by salary range
+    Map<String, Map<String, List<Employee>>> nested = employees.stream()
+        .collect(Collectors.groupingBy(
+            Employee::dept,
+            Collectors.groupingBy(emp ->
+                emp.salary() >= 80000 ? "Senior" : "Junior"
+            )
+        ));
+    // {Engineering={Senior=[Alice, Bob]}, Marketing={Junior=[Charlie, Diana]}, ...}
+
+
+------------------------------------------------------------------------
+8. partitioningBy()
+------------------------------------------------------------------------
+
+A special case of groupingBy that splits stream into exactly two groups:
+TRUE and FALSE. Always returns Map<Boolean, List<T>>.
+
+-------------------------------------
+8a. partitioningBy(predicate)
+
+    Map<Boolean, List<Employee>> partition = employees.stream()
+        .collect(Collectors.partitioningBy(e -> e.salary() >= 80000));
+
+    partition.get(true);   // [Alice, Bob] — high earners
+    partition.get(false);  // [Charlie, Diana, Eve] — others
+
+-------------------------------------
+8b. partitioningBy(predicate, downstream)
+
+    Map<Boolean, Long> countPartition = employees.stream()
+        .collect(Collectors.partitioningBy(
+            e -> e.salary() >= 80000,
+            Collectors.counting()
+        ));
+    // {true=2, false=3}
+
+    Map<Boolean, List<String>> namePartition = employees.stream()
+        .collect(Collectors.partitioningBy(
+            e -> e.salary() >= 80000,
+            Collectors.mapping(Employee::name, Collectors.toList())
+        ));
+    // {true=[Alice, Bob], false=[Charlie, Diana, Eve]}
+
+
+------------------------------------------------------------------------
+9. mapping() AND flatMapping()
+------------------------------------------------------------------------
+
+Used almost exclusively as DOWNSTREAM collectors inside groupingBy
+or partitioningBy to transform elements before collecting them.
+
+-------------------------------------
+9a. mapping(mapper, downstream)
+
+    // Get names (not Employee objects) per department
+    Map<String, List<String>> namesByDept = employees.stream()
+        .collect(Collectors.groupingBy(
+            Employee::dept,
+            Collectors.mapping(Employee::name, Collectors.toList())
+        ));
+    // {Engineering=[Alice, Bob], Marketing=[Charlie, Diana], HR=[Eve]}
+
+    // Get name set per department (no duplicates)
+    Map<String, Set<String>> nameSetByDept = employees.stream()
+        .collect(Collectors.groupingBy(
+            Employee::dept,
+            Collectors.mapping(Employee::name, Collectors.toSet())
+        ));
+
+-------------------------------------
+9b. flatMapping(mapper, downstream)  (Java 9+)
+
+    record Course(String name, List<String> tags) {}
+
+    List<Course> courses = List.of(
+        new Course("Java",   List.of("OOP", "Streams", "Generics")),
+        new Course("Python", List.of("OOP", "ML", "Scripting")),
+        new Course("SQL",    List.of("DB", "Queries"))
+    );
+
+    // Collect all tags per course name into a flat Set
+    Map<String, Set<String>> tagsByName = courses.stream()
+        .collect(Collectors.groupingBy(
+            Course::name,
+            Collectors.flatMapping(c -> c.tags().stream(), Collectors.toSet())
+        ));
+    // {Java=[OOP, Streams, Generics], Python=[OOP, ML, Scripting], SQL=[DB, Queries]}
+
+
+------------------------------------------------------------------------
+10. minBy() AND maxBy()
+------------------------------------------------------------------------
+
+Returns Optional<T> — the min or max element by a given Comparator.
+Primarily used as downstream collectors.
+
+    Optional<Employee> lowestPaid = employees.stream()
+        .collect(Collectors.minBy(Comparator.comparingInt(Employee::salary)));
+    // Optional[Eve(65000)]
+
+    Optional<Employee> highestPaid = employees.stream()
+        .collect(Collectors.maxBy(Comparator.comparingInt(Employee::salary)));
+    // Optional[Alice(90000)]
+
+    // Per-department highest paid (as downstream)
+    Map<String, Optional<Employee>> topEarnerByDept = employees.stream()
+        .collect(Collectors.groupingBy(
+            Employee::dept,
+            Collectors.maxBy(Comparator.comparingInt(Employee::salary))
+        ));
+
+
+------------------------------------------------------------------------
+11. collectingAndThen() — POST-PROCESSING A COLLECTOR
+------------------------------------------------------------------------
+
+Applies a finisher function to the result of another collector.
+Useful for making collections unmodifiable or applying a final transform.
+
+    // Collect to list, then make it unmodifiable
+    List<String> immutable = names.stream()
+        .collect(Collectors.collectingAndThen(
+            Collectors.toList(),
+            Collections::unmodifiableList
+        ));
+
+    // Collect to list, then get its size
+    int size = names.stream()
+        .collect(Collectors.collectingAndThen(
+            Collectors.toList(),
+            List::size
+        ));
+
+    // Get the highest-paid employee directly (unwrap Optional)
+    Employee top = employees.stream()
+        .collect(Collectors.collectingAndThen(
+            Collectors.maxBy(Comparator.comparingInt(Employee::salary)),
+            Optional::get
+        ));
+    // Alice
+
+
+------------------------------------------------------------------------
+12. teeing()  (Java 12+)
+------------------------------------------------------------------------
+
+Passes each element to TWO collectors simultaneously, then merges the
+two results using a merger function. Eliminates the need to stream twice.
+
+Signature:
+    Collectors.teeing(downstreamA, downstreamB, merger)
+
+Example — compute min and max in a single pass:
+    record MinMax(int min, int max) {}
+
+    MinMax result = Stream.of(3, 1, 4, 1, 5, 9, 2, 6)
+        .collect(Collectors.teeing(
+            Collectors.minBy(Comparator.naturalOrder()),
+            Collectors.maxBy(Comparator.naturalOrder()),
+            (min, max) -> new MinMax(min.get(), max.get())
+        ));
+    // MinMax[min=1, max=9]
+
+Example — split into two lists in one pass:
+    Map.Entry<List<Employee>, List<Employee>> split = employees.stream()
+        .collect(Collectors.teeing(
+            Collectors.filtering(e -> e.salary() >= 80000, Collectors.toList()),
+            Collectors.filtering(e -> e.salary() <  80000, Collectors.toList()),
+            Map::entry
+        ));
+
+
+------------------------------------------------------------------------
+13. filtering()  (Java 9+)
+------------------------------------------------------------------------
+
+A downstream collector that applies a predicate before collecting.
+Unlike stream.filter() (which is an intermediate op), filtering() is
+used INSIDE groupingBy/partitioningBy to filter within each group.
+
+    // Count only high-paid employees per dept
+    Map<String, Long> highEarnerCountByDept = employees.stream()
+        .collect(Collectors.groupingBy(
+            Employee::dept,
+            Collectors.filtering(
+                e -> e.salary() >= 80000,
+                Collectors.counting()
+            )
+        ));
+    // {Engineering=2, Marketing=0, HR=0}
+
+Note: If you used stream.filter() before groupingBy(), departments with
+zero matches would disappear from the map. filtering() as a downstream
+preserves all group keys (with 0 or empty for non-matching groups).
+
+
+------------------------------------------------------------------------
+14. CUSTOM COLLECTOR WITH Collector.of()
+------------------------------------------------------------------------
+
+For cases where built-in collectors are not enough.
+
+Collector.of(supplier, accumulator, combiner, finisher, characteristics)
+
+Example — collect to a comma-separated String (like joining, from scratch):
+    Collector<String, StringBuilder, String> csvCollector = Collector.of(
+        StringBuilder::new,                   // Supplier
+        (sb, s) -> {                          // Accumulator
+            if (sb.length() > 0) sb.append(", ");
+            sb.append(s);
+        },
+        (sb1, sb2) -> {                       // Combiner (for parallel)
+            if (sb1.length() > 0) sb1.append(", ");
+            return sb1.append(sb2);
+        },
+        StringBuilder::toString               // Finisher
+    );
+
+    String csv = Stream.of("Alice", "Bob", "Charlie")
+                       .collect(csvCollector);
+    // "Alice, Bob, Charlie"
+
+
+------------------------------------------------------------------------
+15. QUICK REFERENCE TABLE
+------------------------------------------------------------------------
+
+Collector                        | Returns              | Use For
+---------------------------------|----------------------|------------------------
+toList()                         | List<T>              | Mutable list
+toUnmodifiableList()             | List<T>              | Immutable list
+toSet()                          | Set<T>               | Unique elements
+toCollection(Supplier)           | Collection<T>        | Specific type
+toMap(k, v)                      | Map<K,V>             | Key-value pairs
+toMap(k, v, merge)               | Map<K,V>             | Handle duplicate keys
+joining()                        | String               | Concatenate strings
+joining(delim, prefix, suffix)   | String               | Format strings
+counting()                       | Long                 | Count elements
+summingInt/Long/Double           | int/long/double      | Sum a numeric field
+averagingInt/Long/Double         | double               | Average of a field
+summarizingInt/Long/Double       | IntSummaryStatistics | All stats at once
+groupingBy(classifier)           | Map<K, List<T>>      | Group into lists
+groupingBy(classifier, down)     | Map<K, R>            | Group with transform
+partitioningBy(pred)             | Map<Boolean, List<T>>| Split into 2 groups
+mapping(mapper, down)            | R                    | Transform in downstream
+flatMapping(mapper, down)        | R                    | Flatten in downstream
+filtering(pred, down)            | R                    | Filter in downstream
+minBy(comparator)                | Optional<T>          | Minimum element
+maxBy(comparator)                | Optional<T>          | Maximum element
+collectingAndThen(down, fn)      | R                    | Post-process result
+teeing(downA, downB, merger)     | R                    | Two collectors, one pass
+
+
+------------------------------------------------------------------------
+16. INTERVIEW QUESTIONS & ANSWERS
+------------------------------------------------------------------------
+
+Q1. What is a Collector in Java Stream API?
+    A Collector is a mutable reduction operation that accumulates stream
+    elements into a result container (like a List, Map, or String).
+    It is used with the collect() terminal operation. The Collectors
+    utility class provides ready-made factory methods for common cases.
+
+Q2. What is the difference between toList() and toUnmodifiableList()?
+    toList() returns a mutable list (ArrayList) — you can add, remove,
+    and modify elements. toUnmodifiableList() (Java 10+) and stream.toList()
+    (Java 16+) return an immutable list — any structural change throws
+    UnsupportedOperationException.
+
+Q3. What happens if two stream elements have the same key in toMap()?
+    By default, toMap() throws IllegalStateException for duplicate keys.
+    To handle this, provide a merge function as the third argument:
+    toMap(keyMapper, valueMapper, (existing, incoming) -> existing)
+    This keeps the existing value and discards the incoming one.
+
+Q4. What is the difference between groupingBy() and partitioningBy()?
+    groupingBy() groups elements by any classifier function, producing
+    a Map<K, List<T>> with potentially many keys. partitioningBy() always
+    produces exactly two groups — Map<Boolean, List<T>> — split by a
+    Predicate. partitioningBy() is a specialization of groupingBy for
+    binary (true/false) splits.
+
+Q5. What is a downstream collector?
+    A downstream collector is a secondary collector passed to groupingBy()
+    or partitioningBy() that further processes each group. For example,
+    groupingBy(dept, counting()) groups employees by department and then
+    counts each group instead of collecting them into a list.
+
+Q6. What is the difference between mapping() and flatMapping()?
+    mapping(mapper, downstream) applies a one-to-one transformation on
+    each element before the downstream collector processes it.
+    flatMapping(mapper, downstream) (Java 9+) applies a one-to-many
+    transformation (element → Stream) and flattens the result before
+    the downstream collector receives it. Use flatMapping() when each
+    element maps to a collection.
+
+Q7. What does collectingAndThen() do?
+    It applies a finisher function to the result of another collector.
+    For example: collectingAndThen(toList(), Collections::unmodifiableList)
+    collects to a list and then makes it unmodifiable. It's useful for
+    post-processing a collector's output without a second stream pass.
+
+Q8. What is teeing() and when would you use it? (Java 12+)
+    teeing(downA, downB, merger) sends each stream element through two
+    collectors simultaneously and then merges their results. Use it when
+    you need two different aggregations over the same stream to avoid
+    streaming the data twice. Example: computing min and max in one pass.
+
+Q9. What is the difference between stream.filter() and Collectors.filtering()?
+    stream.filter() is an intermediate operation — it removes elements
+    before any grouping happens. If a group has no matching elements,
+    that key won't appear in the resulting map.
+    Collectors.filtering() (Java 9+) is a downstream collector — it
+    filters within each group after grouping. Empty groups still appear
+    in the map (with 0 count or empty list), preserving all group keys.
+
+Q10. How does groupingBy() with a TreeMap sort the keys?
+     Pass TreeMap::new as the map factory (third argument):
+     groupingBy(classifier, TreeMap::new, downstream)
+     TreeMap maintains natural ordering of keys, so the resulting map
+     will have its keys sorted alphabetically (or numerically).
+
+Q11. How would you get a Map<String, String> (dept → employee names
+     joined with comma) from a list of employees in one stream pass?
+     Use groupingBy with a mapping + joining downstream:
+
+     Map<String, String> result = employees.stream()
+         .collect(Collectors.groupingBy(
+             Employee::dept,
+             Collectors.mapping(
+                 Employee::name,
+                 Collectors.joining(", ")
+             )
+         ));
+     // {Engineering=Alice, Bob, Marketing=Charlie, Diana, HR=Eve}
+
+Q12. Can you use Collectors in a parallel stream?
+     Yes. Built-in Collectors are designed to work with parallel streams.
+     They provide a combiner function that merges partial results from
+     different threads. However, the result container must be thread-safe
+     (the combiner handles merging, not concurrent access). For custom
+     Collector.of(), you must ensure your combiner is correct.
+
+Q13. What is Collectors.summarizingInt() and what does it return?
+     It returns an IntSummaryStatistics object (or Long/Double variants)
+     that holds count, sum, min, max, and average in a single pass.
+     Useful when you need multiple statistics without streaming twice:
+     stats.getMin(), stats.getMax(), stats.getAverage(), stats.getSum()
+
+Q14. What is the difference between reduce() and collect()?
+     reduce() is for immutable reduction — it produces a single scalar
+     value (sum, product, etc.) using a BinaryOperator and is suited
+     for simple aggregation. collect() is for mutable reduction — it
+     accumulates elements into a container (List, Map, String) using a
+     Collector. Using reduce() to build a collection is inefficient
+     because it creates a new object for every element.
+
+Q15. What are the Collector characteristics and why do they matter?
+     Characteristics are hints to the Stream framework:
+     - CONCURRENT: The accumulator can be called concurrently (no combiner needed)
+     - UNORDERED: Result does not depend on element order
+     - IDENTITY_FINISH: The finisher is the identity function (can be skipped)
+     These allow the framework to optimize how the Collector is executed,
+     especially in parallel streams.
+
+================================================================================
+                        END OF COLLECTORS NOTES
+================================================================================
