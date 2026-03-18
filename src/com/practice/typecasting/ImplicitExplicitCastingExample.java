@@ -1,7 +1,9 @@
 package com.practice.typecasting;
 
-public class Main  {
+public class ImplicitExplicitCastingExample {
     public static void main(String[] args)  {
+        
+        // Implicit casting
         int x = 7;
         long y = x;
         float z = y;
@@ -9,6 +11,7 @@ public class Main  {
         System.out.println("After conversion, long value " + y);
         System.out.println("After conversion, float value " + z);
 
+        // Explicit casting
         double num = 10.75;
         int result = (int) num;
         System.out.println("Original value: " + num);
