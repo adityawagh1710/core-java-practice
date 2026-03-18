@@ -70,5 +70,14 @@ public class CustomFiCollectorStreamExample5 {
 				);
 		
 		System.out.println(employeesList3);
+		
+		List<String> employeesList4 = employees
+				.stream()
+				.filter(emp -> emp.getSalary() > 50000)
+				.map(emp -> emp.getName() + " earns " + emp.getSalary())
+				.distinct()
+				.toList();
+		
+		System.out.println(employeesList4);
 	}
 }
