@@ -1,0 +1,703 @@
+================================================================================
+             JAVA `this` AND `super` KEYWORDS
+================================================================================
+
+------------------------------------------------------------------------
+PART 1 — THE `this` KEYWORD
+------------------------------------------------------------------------
+
+`this` is a reference variable that refers to the CURRENT OBJECT —
+the object whose method or constructor is currently executing.
+
+It is implicitly available inside every instance method and constructor.
+It is NOT available in static methods (no "current object" exists there).
+
+------------------------------------------------------------------------
+1A. USES OF `this`
+------------------------------------------------------------------------
+
+USE 1 — Disambiguate field from parameter (most common use)
+
+    When a constructor or setter parameter has the SAME name as an
+    instance field, `this.field` refers to the field.
+
+    public class Student {
+        private String name;
+        private int age;
+
+        public Student(String name, int age) {
+            this.name = name;   // this.name = field, name = parameter
+            this.age  = age;
+        }
+    }
+
+    Without `this`, the parameter shadows the field and the field
+    is never assigned — a very common bug for beginners.
+
+----------------------------------------------------------------------
+
+USE 2 — Call another constructor in the same class (constructor chaining)
+
+    `this(...)` must be the FIRST statement in a constructor.
+    Used to avoid repeating initialization logic across overloaded ctors.
+
+    public class Rectangle {
+        private int width;
+        private int height;
+        private String color;
+
+        // Primary constructor — all fields
+        public Rectangle(int width, int height, String color) {
+            this.width  = width;
+            this.height = height;
+            this.color  = color;
+        }
+
+        // Delegates to primary — default color
+        public Rectangle(int width, int height) {
+            this(width, height, "white");  // must be first line
+        }
+
+        // Delegates — default square, default color
+        public Rectangle(int side) {
+            this(side, side);              // chains through the 2-arg ctor
+        }
+    }
+
+    Usage:
+        Rectangle r1 = new Rectangle(10, 5, "red");
+        Rectangle r2 = new Rectangle(10, 5);   // color = "white"
+        Rectangle r3 = new Rectangle(7);       // 7x7 white square
+
+----------------------------------------------------------------------
+
+USE 3 — Pass the current object as an argument to another method
+
+    public class Button {
+        private String label;
+
+        public Button(String label) {
+            this.label = label;
+        }
+
+        public void click() {
+            EventLogger.log(this);  // passes the Button object itself
+        }
+    }
+
+    public class EventLogger {
+        public static void log(Button b) {
+            System.out.println("Clicked: " + b.getLabel());
+        }
+    }
+
+----------------------------------------------------------------------
+
+USE 4 — Return the current object (method chaining / Builder pattern)
+
+    public class QueryBuilder {
+        private String table;
+        private String condition;
+        private int limit;
+
+        public QueryBuilder from(String table) {
+            this.table = table;
+            return this;           // enables chaining
+        }
+
+        public QueryBuilder where(String condition) {
+            this.condition = condition;
+            return this;
+        }
+
+        public QueryBuilder limit(int n) {
+            this.limit = n;
+            return this;
+        }
+
+        public String build() {
+            return "SELECT * FROM " + table +
+                   " WHERE " + condition +
+                   " LIMIT " + limit;
+        }
+    }
+
+    Usage (method chaining):
+        String query = new QueryBuilder()
+            .from("employees")
+            .where("dept = 'Engineering'")
+            .limit(10)
+            .build();
+        // SELECT * FROM employees WHERE dept = 'Engineering' LIMIT 10
+
+----------------------------------------------------------------------
+
+USE 5 — `this` in inner classes to refer to the outer instance
+
+    public class Outer {
+        private String name = "Outer";
+
+        class Inner {
+            private String name = "Inner";
+
+            void printNames() {
+                System.out.println(name);        // Inner.name
+                System.out.println(this.name);   // Inner.name  (same)
+                System.out.println(Outer.this.name); // Outer.name
+            }
+        }
+    }
+
+
+------------------------------------------------------------------------
+PART 2 — THE `super` KEYWORD
+------------------------------------------------------------------------
+
+`super` refers to the PARENT CLASS (immediate superclass). It is used
+inside a subclass to access the parent's constructor, fields, or methods.
+
+Like `this`, `super` is not available in static methods.
+
+------------------------------------------------------------------------
+2A. USES OF `super`
+------------------------------------------------------------------------
+
+USE 1 — Call the parent class constructor
+
+    `super(...)` must be the FIRST statement in the subclass constructor.
+    If you don't call it explicitly, the compiler inserts `super()` — a
+    no-arg call to the parent. If the parent has no no-arg constructor,
+    you MUST call `super(args)` explicitly or you get a compile error.
+
+    public class Animal {
+        private String name;
+        private int age;
+
+        public Animal(String name, int age) {
+            this.name = name;
+            this.age  = age;
+        }
+
+        public String getName() { return name; }
+        public int    getAge()  { return age;  }
+
+        public String sound() {
+            return "...";
+        }
+
+        @Override
+        public String toString() {
+            return name + " (age " + age + ")";
+        }
+    }
+
+    public class Dog extends Animal {
+        private String breed;
+
+        public Dog(String name, int age, String breed) {
+            super(name, age);      // calls Animal(name, age) — MUST be first
+            this.breed = breed;    // Dog's own field
+        }
+
+        public String getBreed() { return breed; }
+
+        @Override
+        public String sound() {
+            return "Woof!";
+        }
+
+        @Override
+        public String toString() {
+            return super.toString() + " [" + breed + "]";
+            // uses Animal.toString() + adds breed
+        }
+    }
+
+    Usage:
+        Dog d = new Dog("Rex", 3, "Labrador");
+        System.out.println(d);           // Rex (age 3) [Labrador]
+        System.out.println(d.sound());   // Woof!
+
+----------------------------------------------------------------------
+
+USE 2 — Call an overridden parent method
+
+    When a subclass overrides a method, calling `super.method()` invokes
+    the parent's version. Useful to extend (not replace) parent behaviour.
+
+    public class Cat extends Animal {
+        private boolean isIndoor;
+
+        public Cat(String name, int age, boolean isIndoor) {
+            super(name, age);
+            this.isIndoor = isIndoor;
+        }
+
+        @Override
+        public String sound() {
+            return "Meow!";
+        }
+
+        public String fullDescription() {
+            // super.toString() calls Animal.toString() for name+age
+            return super.toString() + " | Indoor: " + isIndoor
+                 + " | Sound: " + sound();
+        }
+    }
+
+    Usage:
+        Cat c = new Cat("Whiskers", 2, true);
+        System.out.println(c.fullDescription());
+        // Whiskers (age 2) | Indoor: true | Sound: Meow!
+
+----------------------------------------------------------------------
+
+USE 3 — Access a parent field hidden by a child field (rare)
+
+    If a subclass declares a field with the SAME NAME as a parent field,
+    the child field hides the parent field (not overriding — fields are
+    NOT polymorphic). Use `super.fieldName` to reach the parent's field.
+
+    public class Vehicle {
+        String type = "Vehicle";
+    }
+
+    public class Car extends Vehicle {
+        String type = "Car";    // hides Vehicle.type
+
+        public void printTypes() {
+            System.out.println(type);        // "Car"
+            System.out.println(super.type);  // "Vehicle"
+        }
+    }
+
+    NOTE: Field hiding is almost always a design mistake in real code.
+    Prefer using methods (which ARE polymorphic) instead.
+
+
+------------------------------------------------------------------------
+PART 3 — `this` vs `super` QUICK COMPARISON
+------------------------------------------------------------------------
+
+Feature                    | this                        | super
+---------------------------|-----------------------------|--------------------------
+Refers to                  | Current object              | Parent class part
+Constructor call           | this(args) — same class     | super(args) — parent class
+Method call                | this.method() — own method  | super.method() — parent's
+Field access               | this.field — own field      | super.field — parent's field
+Must be first in ctor?     | Yes (if used for ctor call) | Yes (if used for ctor call)
+Available in static method | No                          | No
+Can be used together?      | Yes, in the same class      | Yes, but not on same line
+
+
+------------------------------------------------------------------------
+PART 4 — COMPLETE CLASS HIERARCHY EXAMPLE (used in all examples below)
+------------------------------------------------------------------------
+
+    public class Animal {
+        protected String name;
+        protected String species;
+        protected int    age;
+
+        public Animal(String name, String species, int age) {
+            this.name    = name;
+            this.species = species;
+            this.age     = age;
+        }
+
+        public String sound()  { return "..."; }
+        public String getName()   { return name; }
+        public String getSpecies(){ return species; }
+        public int    getAge()    { return age; }
+
+        @Override
+        public String toString() {
+            return name + " (" + species + ", age " + age + ")";
+        }
+    }
+
+    public class Dog extends Animal {
+        private String breed;
+        private boolean trained;
+
+        public Dog(String name, int age, String breed, boolean trained) {
+            super(name, "Canis lupus familiaris", age);
+            this.breed   = breed;
+            this.trained = trained;
+        }
+
+        @Override public String sound()    { return "Woof"; }
+        public String getBreed()           { return breed; }
+        public boolean isTrained()         { return trained; }
+
+        @Override
+        public String toString() {
+            return super.toString() + " | Breed: " + breed
+                 + " | Trained: " + trained;
+        }
+    }
+
+    public class Cat extends Animal {
+        private boolean isIndoor;
+        private int lives;
+
+        public Cat(String name, int age, boolean isIndoor) {
+            super(name, "Felis catus", age);
+            this.isIndoor = isIndoor;
+            this.lives    = 9;
+        }
+
+        @Override public String sound()   { return "Meow"; }
+        public boolean isIndoor()         { return isIndoor; }
+        public int     getLives()         { return lives; }
+
+        @Override
+        public String toString() {
+            return super.toString() + " | Indoor: " + isIndoor
+                 + " | Lives: " + lives;
+        }
+    }
+
+    List<Animal> shelter = List.of(
+        new Dog("Rex",      3, "Labrador",  true),
+        new Dog("Buddy",    5, "Poodle",    false),
+        new Dog("Max",      1, "Beagle",    true),
+        new Cat("Whiskers", 2, true),
+        new Cat("Shadow",   4, false),
+        new Dog("Luna",     2, "Husky",     true)
+    );
+
+
+------------------------------------------------------------------------
+PART 5 — WITHOUT STREAM API (traditional loops)
+------------------------------------------------------------------------
+
+Example 1 — Print all animals using toString() (which calls super.toString())
+
+    for (Animal a : shelter) {
+        System.out.println(a);  // polymorphic — calls Dog.toString or Cat.toString
+    }
+
+    Output sample:
+        Rex (Canis lupus familiaris, age 3) | Breed: Labrador | Trained: true
+        Whiskers (Felis catus, age 2) | Indoor: true | Lives: 9
+
+----------------------------------------------------------------------
+
+Example 2 — Count dogs vs cats
+
+    int dogCount = 0, catCount = 0;
+    for (Animal a : shelter) {
+        if (a instanceof Dog) dogCount++;
+        else if (a instanceof Cat) catCount++;
+    }
+    System.out.println("Dogs: " + dogCount + ", Cats: " + catCount);
+    // Dogs: 4, Cats: 2
+
+----------------------------------------------------------------------
+
+Example 3 — Find all trained dogs (using instanceof + cast)
+
+    List<Dog> trainedDogs = new ArrayList<>();
+    for (Animal a : shelter) {
+        if (a instanceof Dog d && d.isTrained()) {
+            trainedDogs.add(d);
+        }
+    }
+    // Rex, Max, Luna
+
+----------------------------------------------------------------------
+
+Example 4 — Hear every animal's sound (polymorphic dispatch via super chain)
+
+    for (Animal a : shelter) {
+        // sound() is overridden — JVM dispatches to Dog.sound() or Cat.sound()
+        // Dog and Cat chose NOT to call super.sound() because Animal just returns "..."
+        System.out.println(a.getName() + " says: " + a.sound());
+    }
+
+    Output:
+        Rex says: Woof
+        Buddy says: Woof
+        Whiskers says: Meow
+
+----------------------------------------------------------------------
+
+Example 5 — Calculate average age with a loop
+
+    int totalAge = 0;
+    for (Animal a : shelter) {
+        totalAge += a.getAge();  // getAge() is inherited — no override needed
+    }
+    double avg = (double) totalAge / shelter.size();
+    System.out.printf("Average age: %.1f%n", avg);
+
+----------------------------------------------------------------------
+
+Example 6 — Find oldest animal
+
+    Animal oldest = shelter.get(0);
+    for (Animal a : shelter) {
+        if (a.getAge() > oldest.getAge()) {
+            oldest = a;
+        }
+    }
+    System.out.println("Oldest: " + oldest);
+
+
+------------------------------------------------------------------------
+PART 6 — WITH STREAM API (same logic, functional style)
+------------------------------------------------------------------------
+
+Example 1 — Print all animals (polymorphic toString via super chain)
+
+    shelter.stream()
+           .forEach(System.out::println);
+
+----------------------------------------------------------------------
+
+Example 2 — Count dogs vs cats using partitioningBy
+
+    import java.util.stream.*;
+
+    Map<Boolean, Long> counts = shelter.stream()
+        .collect(Collectors.partitioningBy(
+            a -> a instanceof Dog,
+            Collectors.counting()
+        ));
+    System.out.println("Dogs: " + counts.get(true));
+    System.out.println("Cats: " + counts.get(false));
+
+----------------------------------------------------------------------
+
+Example 3 — Get all trained dogs using instanceof pattern + filter
+
+    List<Dog> trainedDogs = shelter.stream()
+        .filter(a -> a instanceof Dog d && d.isTrained())
+        .map(a -> (Dog) a)
+        .collect(Collectors.toList());
+
+    // Java 16+ pattern matching:
+    List<Dog> trainedDogs2 = shelter.stream()
+        .filter(Dog.class::isInstance)
+        .map(Dog.class::cast)
+        .filter(Dog::isTrained)
+        .collect(Collectors.toList());
+
+----------------------------------------------------------------------
+
+Example 4 — Collect all sounds (polymorphic method via stream)
+
+    List<String> sounds = shelter.stream()
+        .map(a -> a.getName() + " says: " + a.sound())
+        .collect(Collectors.toList());
+    sounds.forEach(System.out::println);
+
+----------------------------------------------------------------------
+
+Example 5 — Average age using mapToInt + average()
+
+    OptionalDouble avg = shelter.stream()
+        .mapToInt(Animal::getAge)   // getAge() is inherited from Animal
+        .average();
+    avg.ifPresent(a -> System.out.printf("Average age: %.1f%n", a));
+
+----------------------------------------------------------------------
+
+Example 6 — Find oldest animal using max()
+
+    Optional<Animal> oldest = shelter.stream()
+        .max(Comparator.comparingInt(Animal::getAge));
+    oldest.ifPresent(a -> System.out.println("Oldest: " + a));
+
+----------------------------------------------------------------------
+
+Example 7 — Group by class type using groupingBy
+
+    Map<String, List<Animal>> byType = shelter.stream()
+        .collect(Collectors.groupingBy(
+            a -> a.getClass().getSimpleName()
+        ));
+    // {Dog=[Rex, Buddy, Max, Luna], Cat=[Whiskers, Shadow]}
+
+----------------------------------------------------------------------
+
+Example 8 — All dog breeds using flatMap / map
+
+    List<String> breeds = shelter.stream()
+        .filter(Dog.class::isInstance)
+        .map(Dog.class::cast)
+        .map(Dog::getBreed)
+        .distinct()
+        .sorted()
+        .collect(Collectors.toList());
+    // [Beagle, Husky, Labrador, Poodle]
+
+----------------------------------------------------------------------
+
+Example 9 — Summary stats on age
+
+    IntSummaryStatistics stats = shelter.stream()
+        .mapToInt(Animal::getAge)
+        .summaryStatistics();
+    System.out.println("Count : " + stats.getCount());
+    System.out.println("Min   : " + stats.getMin());
+    System.out.println("Max   : " + stats.getMax());
+    System.out.println("Avg   : " + stats.getAverage());
+
+----------------------------------------------------------------------
+
+Example 10 — toString() chain: stream + super.toString() visible in output
+
+    // toString() in Dog calls super.toString() (Animal's version) + adds breed.
+    // When we collect to a joined string, both layers are visible.
+    String report = shelter.stream()
+        .filter(Dog.class::isInstance)
+        .map(Object::toString)       // calls Dog.toString → super.toString() inside
+        .collect(Collectors.joining("\n"));
+    System.out.println(report);
+
+    Output:
+        Rex (Canis lupus familiaris, age 3) | Breed: Labrador | Trained: true
+        Buddy (Canis lupus familiaris, age 5) | Breed: Poodle | Trained: false
+        ...
+
+
+------------------------------------------------------------------------
+PART 7 — IMPORTANT RULES TO REMEMBER
+------------------------------------------------------------------------
+
+  this keyword:
+  1. `this` refers to the current object — instance methods and ctors only
+  2. `this(args)` calls another constructor in the SAME class
+  3. `this(args)` must be the FIRST statement in a constructor
+  4. Cannot use `this` and `super(...)` as the first line simultaneously
+  5. `this` is not available in static methods
+  6. `this` enables method chaining when returned (Builder pattern)
+
+  super keyword:
+  7. `super` refers to the immediate parent class — one level up only
+  8. `super(args)` must be the FIRST statement in a subclass constructor
+  9. If omitted, the compiler inserts `super()` (no-arg parent call)
+  10. `super.method()` calls the parent's version of an overridden method
+  11. Cannot skip levels — `super.super` is NOT valid in Java
+  12. Constructors are NOT inherited, but ARE chained via super()
+
+  General:
+  13. Both `this` and `super` are forbidden in static context
+  14. `this(...)` and `super(...)` cannot BOTH be first in one constructor
+  15. Fields are NOT polymorphic; methods ARE — use methods, not field hiding
+
+
+------------------------------------------------------------------------
+PART 8 — INTERVIEW QUESTIONS & ANSWERS
+------------------------------------------------------------------------
+
+Q1. What is the `this` keyword in Java?
+    `this` is a reference to the current object — the instance on which
+    a method or constructor is being called. Its most common uses are
+    disambiguating instance fields from parameters with the same name,
+    calling another constructor in the same class via `this(args)`, and
+    returning the current object to enable method chaining.
+
+Q2. What is the `super` keyword in Java?
+    `super` refers to the immediate parent class of the current class.
+    It is used to call the parent's constructor via `super(args)`,
+    invoke an overridden parent method via `super.method()`, and access
+    a hidden parent field via `super.field`.
+
+Q3. Can you use both `this()` and `super()` in the same constructor?
+    No. Both must be the first statement in a constructor, and a
+    constructor can have only one first statement. Attempting to use
+    both causes a compile error.
+
+Q4. What happens if you don't call `super()` in a subclass constructor?
+    The compiler automatically inserts `super()` (the no-arg version)
+    as the first statement. If the parent class has no no-arg constructor
+    — because it defines only parameterized constructors — this implicit
+    call fails and you get a compile error. You must explicitly call
+    `super(args)` with the correct arguments.
+
+Q5. Is `this` available in a static method?
+    No. Static methods belong to the class, not to any object instance.
+    There is no "current object" in a static context, so `this` has no
+    meaning there. Using `this` in a static method is a compile error.
+
+Q6. Can you call a parent's overridden method from a subclass?
+    Yes, using `super.methodName()`. This is useful when the subclass
+    wants to extend the parent's behaviour rather than completely replace
+    it — for example, calling `super.toString()` to get the parent's
+    string representation and then appending extra fields to it.
+
+Q7. What is constructor chaining with `this()`?
+    When a class has multiple overloaded constructors, `this(args)` lets
+    one constructor delegate to another in the same class, avoiding
+    duplicated initialization code. The delegating call must be the very
+    first statement. Common pattern: a "primary" full-argument constructor
+    does all the real work; other constructors delegate to it with
+    default values.
+
+Q8. What is the difference between method overriding and field hiding?
+    When a subclass defines a method with the same signature as a parent
+    method, it OVERRIDES it — the JVM uses the actual runtime type to
+    dispatch the call (polymorphism). When a subclass defines a field
+    with the same name as a parent field, it HIDES it — field access is
+    resolved at COMPILE TIME based on the reference type, not the runtime
+    type. `super.field` accesses the hidden parent field. Field hiding
+    is almost always a design mistake.
+
+Q9. How does `super.toString()` relate to inheritance in practice?
+    A common pattern is for each class in a hierarchy to call
+    `super.toString()` and append its own fields. This way,
+    `Dog.toString()` includes both Animal's name/age and Dog's breed —
+    the full object is described automatically. Streams calling
+    `map(Object::toString)` benefit from this layered output.
+
+Q10. Can `super` skip multiple levels (e.g., grandparent)?
+     No. `super` always refers to the IMMEDIATE parent only. Java does
+     not provide `super.super` syntax. If you need grandparent behaviour,
+     the parent class must expose it through a method (e.g., the parent
+     calls its own `super.method()` and the grandchild calls the parent's
+     method).
+
+Q11. What is the output of this code?
+
+     class A {
+         A() { System.out.println("A constructor"); }
+     }
+     class B extends A {
+         B() { System.out.println("B constructor"); }
+     }
+     class C extends B {
+         C() { System.out.println("C constructor"); }
+     }
+     new C();
+
+     Answer:
+         A constructor
+         B constructor
+         C constructor
+
+     Reason: Each constructor implicitly calls super() first (A → B → C),
+     so A's constructor runs first, then B's, then C's.
+
+Q12. How does `this` enable the Builder pattern?
+     By returning `this` from every setter-like method, you allow calls
+     to be chained: `builder.setA(x).setB(y).setC(z).build()`. Each
+     method modifies the builder's state and returns `this` (the same
+     builder object), so the next method call is on the same object.
+     This leads to clean, readable object construction code.
+
+Q13. In a Stream pipeline operating on Animal objects, how does
+     polymorphism work with `sound()` and `toString()`?
+
+     When you call `a.sound()` inside a lambda `a -> a.sound()`, the JVM
+     uses the ACTUAL runtime type of `a` (Dog or Cat) to dispatch the
+     call — not the declared reference type (Animal). This is standard
+     runtime polymorphism. Similarly, `Object::toString` in a stream map
+     calls whichever `toString()` is defined on the actual object,
+     which in turn may call `super.toString()` to compose its output.
+     The stream doesn't need to know the concrete type — polymorphism
+     handles the dispatch automatically.
+
+================================================================================
