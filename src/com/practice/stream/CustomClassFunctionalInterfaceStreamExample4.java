@@ -63,7 +63,7 @@ class Employee2 {
 	}
 }
 
-public class CustomClassFunctionalInterfaceStreamExample3 {
+public class CustomClassFunctionalInterfaceStreamExample4 {
 	
 	public static void main(String[] args) {
 		

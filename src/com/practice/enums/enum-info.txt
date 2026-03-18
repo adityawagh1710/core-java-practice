@@ -1,0 +1,217 @@
+==============================================================
+JAVA ENUM (Complete Notes)
+==============================================================
+
+1. What is ENUM?
+----------------
+Enum (Enumeration) is a special data type used to define a collection of constants.
+
+Example:
+--------
+enum Day {
+    MONDAY, TUESDAY, WEDNESDAY, THURSDAY, FRIDAY, SATURDAY, SUNDAY
+}
+
+Usage:
+------
+Day today = Day.MONDAY;
+
+2. Key Features
+---------------
+- Type-safe constants
+- Fixed set of values
+- Can have methods, constructors, variables
+- Implicitly extends java.lang.Enum
+- Cannot extend other classes
+
+3. Enum with Switch
+-------------------
+Day day = Day.MONDAY;
+
+switch(day) {
+    case MONDAY:
+        System.out.println("Start of week");
+        break;
+}
+
+4. Enum with Fields & Constructor
+---------------------------------
+enum Status {
+    SUCCESS(200),
+    ERROR(500);
+
+    private int code;
+
+    Status(int code) {
+        this.code = code;
+    }
+
+    public int getCode() {
+        return code;
+    }
+}
+
+Usage:
+------
+System.out.println(Status.SUCCESS.getCode());
+
+5. Enum with Methods
+--------------------
+enum Operation {
+    ADD {
+        public int apply(int a, int b) { return a + b; }
+    },
+    SUB {
+        public int apply(int a, int b) { return a - b; }
+    };
+
+    public abstract int apply(int a, int b);
+}
+
+6. values() and valueOf()
+--------------------------
+Day[] days = Day.values();
+Day d = Day.valueOf("MONDAY");
+
+7. EnumSet & EnumMap
+---------------------
+- EnumSet: High-performance Set for enums
+- EnumMap: Map with enum keys
+
+Example:
+--------
+EnumSet<Day> weekend = EnumSet.of(Day.SATURDAY, Day.SUNDAY);
+
+==============================================================
+STREAM API (Complete Notes)
+==============================================================
+
+1. What is Stream API?
+----------------------
+Stream API is used to process collections in a functional style.
+
+- Introduced in Java 8
+- Works with lambda expressions
+- Does NOT modify original data
+
+2. Stream Flow
+--------------
+Collection → Stream → Intermediate Ops → Terminal Ops
+
+Example:
+--------
+List<Integer> list = Arrays.asList(1,2,3,4,5);
+
+list.stream()
+    .filter(x -> x % 2 == 0)
+    .map(x -> x * 2)
+    .forEach(System.out::println);
+
+3. Types of Operations
+----------------------
+
+(A) Intermediate (Lazy)
+- filter()
+- map()
+- sorted()
+- distinct()
+
+(B) Terminal
+- forEach()
+- collect()
+- count()
+- reduce()
+
+4. Common Methods
+-----------------
+
+filter():
+---------
+list.stream()
+    .filter(x -> x > 2)
+    .forEach(System.out::println);
+
+map():
+------
+list.stream()
+    .map(x -> x * x)
+    .forEach(System.out::println);
+
+sorted():
+---------
+list.stream()
+    .sorted()
+    .forEach(System.out::println);
+
+5. Collectors
+--------------
+List<Integer> result = list.stream()
+    .filter(x -> x > 2)
+    .collect(Collectors.toList());
+
+6. Reduce
+----------
+int sum = list.stream()
+    .reduce(0, (a, b) -> a + b);
+
+7. Custom Class Example
+-----------------------
+class Employee {
+    int id;
+    String name;
+    double salary;
+
+    Employee(int id, String name, double salary) {
+        this.id = id;
+        this.name = name;
+        this.salary = salary;
+    }
+}
+
+List<Employee> empList = Arrays.asList(
+    new Employee(1, "A", 50000),
+    new Employee(2, "B", 70000)
+);
+
+empList.stream()
+    .filter(e -> e.salary > 60000)
+    .forEach(e -> System.out.println(e.name));
+
+8. Parallel Stream
+------------------
+list.parallelStream()
+    .forEach(System.out::println);
+
+==============================================================
+INTERVIEW QUESTIONS
+==============================================================
+
+ENUM Questions:
+---------------
+1. What is enum in Java?
+2. Can enum have constructors?
+3. Can enum implement interfaces?
+4. Difference between enum and class?
+5. What are EnumSet and EnumMap?
+
+Stream API Questions:
+---------------------
+1. What is Stream API?
+2. Difference between Collection and Stream?
+3. What are intermediate and terminal operations?
+4. What is lazy evaluation?
+5. Difference between map() and flatMap()?
+6. What is reduce()?
+7. What is parallel stream?
+8. What is Collectors class?
+9. Can stream be reused?
+   → No (once consumed, cannot reuse)
+
+Tricky Questions:
+-----------------
+1. Why streams are lazy?
+2. Difference between forEach() and peek()?
+3. How sorting works in stream?
+4. What happens internally in filter()?
+
+==============================================================

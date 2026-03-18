@@ -52,7 +52,7 @@ class Employee {
 	}
 }
 
-public class CustomClassStreamExample2 {
+public class CustomClassStreamExample3 {
 	
 	public static void main(String[] args) {
 		

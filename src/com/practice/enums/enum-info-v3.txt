@@ -1,0 +1,345 @@
+------------------------------------------------------------------------
+1. WHAT IS AN ENUM?
+------------------------------------------------------------------------
+
+An enum (enumeration) is a special class in Java that represents a group
+of CONSTANTS - values that cannot be changed.
+
+Declared with the `enum` keyword instead of `class`.
+
+Every enum in Java implicitly extends java.lang.Enum<E>.
+Because Java doesn't support multiple inheritance, an enum CANNOT extend
+any other class, but it CAN implement interfaces.
+
+Syntax:
+    public enum Direction {
+        NORTH, SOUTH, EAST, WEST
+    }
+
+Usage:
+    Direction d = Direction.NORTH;
+    System.out.println(d); // NORTH
+
+
+------------------------------------------------------------------------
+2. WHY USE ENUM INSTEAD OF CONSTANTS?
+------------------------------------------------------------------------
+
+BAD (before enum):
+    public static final int MON = 1;
+    public static final int TUE = 2;
+    // No type safety! You can pass any int by mistake.
+
+GOOD (with enum):
+    public enum Day { MON, TUE, WED, THU, FRI, SAT, SUN }
+    // Compiler enforces correct type. Can only pass Day values.
+
+Benefits:
+  - Type safety
+  - Readable and self-documenting
+  - Can have fields, methods, and constructors
+  - Works well in switch statements
+  - Has built-in methods (values(), ordinal(), name(), valueOf())
+
+
+------------------------------------------------------------------------
+3. ENUM BUILT-IN METHODS
+------------------------------------------------------------------------
+
+Given:
+    public enum Planet { MERCURY, VENUS, EARTH }
+
+a) values()
+   - Returns an array of all enum constants in declaration order.
+   - Planet[] all = Planet.values();
+   - for (Planet p : Planet.values()) { System.out.println(p); }
+
+b) ordinal()
+   - Returns the 0-based position of the constant.
+   - Planet.EARTH.ordinal() → 2
+
+c) name()
+   - Returns the constant's name as a String (same as toString()).
+   - Planet.VENUS.name() → "VENUS"
+
+d) valueOf(String name)
+   - Returns the enum constant with the given name.
+   - Planet p = Planet.valueOf("MERCURY"); → Planet.MERCURY
+   - Throws IllegalArgumentException if name doesn't match.
+
+e) compareTo(E other)
+   - Compares two enum constants by their ordinal values.
+   - Planet.MERCURY.compareTo(Planet.EARTH) → negative (MERCURY comes first)
+
+f) equals() and hashCode()
+   - Inherited from Enum. Compares by reference (== is also safe for enums).
+
+
+------------------------------------------------------------------------
+4. ENUM WITH FIELDS AND CONSTRUCTOR
+------------------------------------------------------------------------
+
+Enums can have instance fields and a constructor (always private or
+package-private — never public or protected).
+
+Example:
+    public enum Planet {
+        MERCURY(3.303e+23, 2.4397e6),
+        VENUS  (4.869e+24, 6.0518e6),
+        EARTH  (5.976e+24, 6.37814e6);
+
+        private final double mass;     // kg
+        private final double radius;   // meters
+
+        // Constructor is implicitly private
+        Planet(double mass, double radius) {
+            this.mass   = mass;
+            this.radius = radius;
+        }
+
+        public double getMass()   { return mass; }
+        public double getRadius() { return radius; }
+
+        static final double G = 6.67300E-11;
+
+        public double surfaceGravity() {
+            return G * mass / (radius * radius);
+        }
+
+        public double surfaceWeight(double otherMass) {
+            return otherMass * surfaceGravity();
+        }
+    }
+
+Usage:
+    double earthWeight = 75.0;
+    double mass = earthWeight / Planet.EARTH.surfaceGravity();
+    for (Planet p : Planet.values()) {
+        System.out.printf("Weight on %s = %6.2f%n", p, p.surfaceWeight(mass));
+    }
+
+
+------------------------------------------------------------------------
+5. ENUM WITH ABSTRACT METHODS (Constant-Specific Body)
+------------------------------------------------------------------------
+
+Each constant can provide its own implementation of an abstract method.
+
+    public enum Operation {
+        PLUS("+") {
+            public double apply(double x, double y) { return x + y; }
+        },
+        MINUS("-") {
+            public double apply(double x, double y) { return x - y; }
+        },
+        TIMES("*") {
+            public double apply(double x, double y) { return x * y; }
+        },
+        DIVIDE("/") {
+            public double apply(double x, double y) { return x / y; }
+        };
+
+        private final String symbol;
+
+        Operation(String symbol) { this.symbol = symbol; }
+
+        @Override
+        public String toString() { return symbol; }
+
+        // Abstract method — each constant must implement this
+        public abstract double apply(double x, double y);
+    }
+
+Usage:
+    double x = 10, y = 3;
+    for (Operation op : Operation.values()) {
+        System.out.printf("%.1f %s %.1f = %.1f%n", x, op, y, op.apply(x, y));
+    }
+
+
+------------------------------------------------------------------------
+6. ENUM IMPLEMENTING AN INTERFACE
+------------------------------------------------------------------------
+
+    public interface Describable {
+        String describe();
+    }
+
+    public enum Season implements Describable {
+        SPRING {
+            public String describe() { return "Warm and rainy"; }
+        },
+        SUMMER {
+            public String describe() { return "Hot and sunny"; }
+        },
+        AUTUMN {
+            public String describe() { return "Cool and windy"; }
+        },
+        WINTER {
+            public String describe() { return "Cold and snowy"; }
+        };
+    }
+
+    System.out.println(Season.SUMMER.describe()); // Hot and sunny
+
+
+------------------------------------------------------------------------
+7. ENUM IN SWITCH STATEMENT
+------------------------------------------------------------------------
+
+    Day today = Day.MON;
+
+    // Traditional switch
+    switch (today) {
+        case MON:
+        case TUE:
+        case WED:
+        case THU:
+        case FRI:
+            System.out.println("Weekday");
+            break;
+        case SAT:
+        case SUN:
+            System.out.println("Weekend");
+            break;
+    }
+
+    // Switch expression (Java 14+)
+    String type = switch (today) {
+        case MON, TUE, WED, THU, FRI -> "Weekday";
+        case SAT, SUN                -> "Weekend";
+    };
+    System.out.println(type);
+
+
+------------------------------------------------------------------------
+8. EnumSet AND EnumMap
+------------------------------------------------------------------------
+
+EnumSet:
+    - A specialized Set for enum types. Very fast (uses bit vectors internally).
+    - All elements must come from the same enum type.
+
+    import java.util.EnumSet;
+
+    EnumSet<Day> weekdays = EnumSet.of(Day.MON, Day.TUE, Day.WED, Day.THU, Day.FRI);
+    EnumSet<Day> weekend  = EnumSet.complementOf(weekdays);
+    EnumSet<Day> allDays  = EnumSet.allOf(Day.class);
+
+EnumMap:
+    - A Map implementation where keys are enum constants.
+    - Internally uses an array indexed by ordinal — very efficient.
+
+    import java.util.EnumMap;
+
+    EnumMap<Day, String> schedule = new EnumMap<>(Day.class);
+    schedule.put(Day.MON, "Team standup at 9 AM");
+    schedule.put(Day.FRI, "Weekly review at 3 PM");
+    System.out.println(schedule.get(Day.MON));
+
+
+------------------------------------------------------------------------
+9. ENUM AS SINGLETON
+------------------------------------------------------------------------
+
+Enum is the recommended way to implement the Singleton pattern in Java
+because it is thread-safe and serialization-safe.
+
+    public enum DatabaseConnection {
+        INSTANCE;
+
+        private String url = "jdbc:mysql://localhost:3306/mydb";
+
+        public void connect() {
+            System.out.println("Connecting to " + url);
+        }
+    }
+
+Usage:
+    DatabaseConnection.INSTANCE.connect();
+
+
+------------------------------------------------------------------------
+10. IMPORTANT RULES TO REMEMBER
+------------------------------------------------------------------------
+
+  1. Enum constants are implicitly: public static final
+  2. Enum constructor is always implicitly private (can't use new)
+  3. Enums can have fields, methods, and constructors
+  4. Enums can implement interfaces but CANNOT extend classes
+  5. Enums CAN have abstract methods (constant-specific bodies)
+  6. Enum constants are always listed first before any fields/methods
+  7. == is safe to use with enums (they are singletons by nature)
+  8. Enum is thread-safe and serialization-safe by default
+  9. ordinal() should rarely be used in application logic (fragile)
+  10. valueOf() is case-sensitive — "north" != "NORTH"
+
+
+------------------------------------------------------------------------
+11. INTERVIEW QUESTIONS & ANSWERS
+------------------------------------------------------------------------
+
+Q1. What is an enum in Java?
+    An enum is a special data type that enables a variable to be a set of
+    predefined constants. All enums implicitly extend java.lang.Enum<E> and
+    are final classes (unless they have abstract methods).
+
+Q2. Can an enum extend a class?
+    No. Since every enum implicitly extends java.lang.Enum, and Java doesn't
+    support multiple inheritance, enums cannot extend any other class.
+    However, they CAN implement interfaces.
+
+Q3. Can an enum implement an interface?
+    Yes. An enum can implement one or more interfaces. Each constant can
+    provide its own implementation of the interface methods (constant-specific
+    body), or the enum can provide a shared default implementation.
+
+Q4. Can we create an object of an enum using `new`?
+    No. Enum constructors are always private. The JVM creates enum instances
+    when the class is loaded. You cannot instantiate them manually.
+
+Q5. What is the difference between ordinal() and name()?
+    - ordinal() returns the 0-based index (int) of the constant in the
+      declaration order.
+    - name() returns the constant's name as a String (e.g., "NORTH").
+    - Tip: Avoid using ordinal() in persistent storage because changing
+      the order of constants will break saved data.
+
+Q6. What is the difference between == and equals() for enums?
+    For enums, both are equivalent and safe. Since each enum constant is
+    a singleton (only one instance exists), == works reliably. The
+    Enum.equals() method is also just a reference comparison internally.
+
+Q7. What is EnumSet? Why is it preferred over HashSet for enums?
+    EnumSet is a specialized Set for enum types. Internally it uses a
+    long bit vector (one bit per constant), making it extremely fast and
+    memory-efficient — O(1) for most operations. Always prefer EnumSet
+    over HashSet when working with enum values.
+
+Q8. What happens if you call valueOf() with an invalid name?
+    It throws an IllegalArgumentException. Note that the match is
+    case-sensitive. Planet.valueOf("earth") will throw, but
+    Planet.valueOf("EARTH") will not.
+
+Q9. Can an enum have abstract methods?
+    Yes. If an enum declares an abstract method, each constant must
+    provide its own implementation via a constant-specific class body.
+    This is called the "constant-specific method implementation" pattern.
+
+Q10. Why is enum considered the best Singleton implementation?
+     - Thread-safe: JVM guarantees one instance per constant.
+     - Serialization-safe: The Enum framework prevents creating new
+       instances during deserialization.
+     - Reflection-safe: You cannot use reflection to invoke a private
+       enum constructor — the JVM will throw an exception.
+
+Q11. What is the output of Planet.EARTH.compareTo(Planet.MERCURY)?
+     It returns a positive integer, because EARTH has a higher ordinal
+     (2) than MERCURY (0). compareTo() returns ordinal difference.
+
+Q12. Is enum thread-safe?
+     Yes. Enum constants are initialized once by the JVM when the enum
+     class is loaded. This happens in a thread-safe manner. However, if
+     an enum has mutable fields, those fields are NOT thread-safe.
+
+================================================================================

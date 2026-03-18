@@ -1,0 +1,132 @@
+Java Enum
+==============================================================
+
+1. What is an Enum?
+• Special class type → fixed set of constants
+• Introduced in Java 5
+• Type-safe alternative to int/String constants
+• Can have fields, methods, constructors
+
+==============================================================
+
+2. Basic Syntax
+enum Day {
+    MONDAY, TUESDAY, WEDNESDAY, THURSDAY, FRIDAY, SATURDAY, SUNDAY
+}
+
+enum Status {
+    SUCCESS, ERROR, PENDING, CANCELLED
+}
+
+==============================================================
+
+3. Most Common Real-World Pattern (with fields + methods)
+
+enum HttpStatus {
+    OK(200, "OK"),
+    CREATED(201, "Created"),
+    BAD_REQUEST(400, "Bad Request"),
+    UNAUTHORIZED(401, "Unauthorized"),
+    NOT_FOUND(404, "Not Found"),
+    INTERNAL_SERVER_ERROR(500, "Internal Server Error");
+
+    private final int code;
+    private final String reason;
+
+    HttpStatus(int code, String reason) {
+        this.code = code;
+        this.reason = reason;
+    }
+
+    public int getCode()     { return code; }
+    public String getReason() { return reason; }
+
+    public boolean isSuccess() {
+        return code >= 200 && code < 300;
+    }
+
+    public boolean isClientError() {
+        return code >= 400 && code < 500;
+    }
+}
+
+==============================================================
+
+4. Useful Built-in Methods (every enum automatically has)
+
+Day today = Day.MONDAY;
+
+today.name()          → "MONDAY"           (String)
+today.ordinal()       → 0                  (position in declaration, 0-based)
+today.toString()      → "MONDAY"           (default = name())
+Day.valueOf("TUESDAY") → Day.TUESDAY
+Day.values()          → Day[] (all constants in order)
+
+==============================================================
+
+5. Advanced / Popular Patterns
+
+• Singleton-like behavior (enum is best singleton in Java)
+enum Singleton {
+    INSTANCE;
+
+    public void doSomething() { ... }
+}
+
+• Strategy / State pattern
+enum Operation {
+    PLUS   { double apply(double x, double y) { return x + y; } },
+    MINUS  { double apply(double x, double y) { return x - y; } },
+    TIMES  { double apply(double x, double y) { return x * y; } };
+
+    abstract double apply(double x, double y);
+}
+
+• Enum with lookup / reverse mapping (very common in interviews)
+
+enum Currency {
+    USD("United States Dollar", "$"),
+    EUR("Euro", "€"),
+    GBP("British Pound", "£");
+
+    private static final Map<String, Currency> BY_CODE = 
+        Stream.of(values()).collect(Collectors.toMap(Currency::name, e -> e));
+
+    private final String fullName;
+    private final String symbol;
+
+    Currency(String fullName, String symbol) {
+        this.fullName = fullName;
+        this.symbol = symbol;
+    }
+
+    public static Currency fromCode(String code) {
+        return BY_CODE.getOrDefault(code.toUpperCase(), null);
+    }
+}
+
+==============================================================
+
+6. Interview Questions – Enum (frequent 2024–2026)
+
+1. Why is enum better than public static final int constants?
+2. Can enum implement interface? (Yes)
+3. Can enum extend a class? (No – implicitly extends java.lang.Enum)
+4. Is enum thread-safe? (Yes – class initialization + final fields)
+5. How to make enum singleton? (Just one constant → INSTANCE)
+6. What happens if you add new constant in production enum? (risk of ordinal-based logic breaking)
+7. How to iterate all enum values?
+8. Difference between name() and toString()?
+9. Can you override toString() in enum? (Yes)
+10. How would you map String → Enum safely (valueOf vs custom lookup)?
+11. Can enum have abstract methods? (Yes – forces each constant to implement)
+12. Is it safe to use ordinal() for persistence / business logic? (No!)
+
+Best Practice Summary 2025:
+• Prefer enum over constants almost always
+• Add fields + meaningful methods
+• Use values() + streams when you need to filter / transform
+• Avoid ordinal() for anything except maybe sorting display order
+• Use custom lookup map instead of valueOf() when input is external
+
+==============================================================
