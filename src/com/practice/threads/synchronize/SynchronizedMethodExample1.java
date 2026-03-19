@@ -9,14 +9,14 @@ public class SynchronizedMethodExample1 {
 	
 	public static void main(String[] args) throws InterruptedException {
 		Runnable task = () -> {
-			System.out.println("Inside thread :: " + Thread.currentThread().getName());
+			System.out.println("Inside thread: " + Thread.currentThread().getName());
 			for (int i = 0; i < 1000; i++) increment();
 		};
 		
 		Thread t1 = new Thread(task);
-		t1.setName("thread 1");
+		t1.setName("Thread 1");
 		Thread t2 = new Thread(task);
-		t2.setName("thread 2");
+		t2.setName("Thread 2");
 		t1.start();
 		t1.join();
 		System.out.println("Count: " + count);

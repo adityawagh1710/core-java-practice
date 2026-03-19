@@ -1,0 +1,807 @@
+--------------------------------------------------------------------------------
+JAVA SYNCHRONIZED + LOCKS + DEADLOCK
+--------------------------------------------------------------------------------
+
+1. WHY SYNCHRONIZED? — THE PROBLEM FIRST
+--------------------------------------------------------------------------------
+
+When two or more threads access shared data at the same time and at least one
+thread modifies it, the result becomes unpredictable. This is called a
+RACE CONDITION.
+
+Example WITHOUT synchronization (broken):
+------------------------------------------
+
+public class RaceCondition {
+
+    static int counter = 0;
+
+    public static void main(String[] args) throws InterruptedException {
+        Runnable task = () -> {
+            for (int i = 0; i < 10000; i++) {
+                counter++; // NOT atomic — read, increment, write (3 steps!)
+            }
+        };
+
+        Thread t1 = new Thread(task);
+        Thread t2 = new Thread(task);
+        t1.start();
+        t2.start();
+        t1.join();
+        t2.join();
+
+        System.out.println("Expected: 20000, Got: " + counter);
+        // Output is something like: Expected: 20000, Got: 13472  (WRONG!)
+    }
+}
+
+WHY it's wrong:
+  Step 1: Thread-1 reads counter = 100
+  Step 2: Thread-2 reads counter = 100  (before Thread-1 writes back!)
+  Step 3: Thread-1 writes counter = 101
+  Step 4: Thread-2 writes counter = 101  (should be 102 — one increment LOST)
+
+The synchronized keyword solves this by allowing only ONE thread at a time
+to execute a critical section.
+
+
+--------------------------------------------------------------------------------
+2. WHAT IS synchronized?
+--------------------------------------------------------------------------------
+
+synchronized is a Java keyword that provides:
+
+  1. MUTUAL EXCLUSION   — Only one thread executes the synchronized block/method
+                          at a time. Others wait.
+  2. MEMORY VISIBILITY  — Changes made inside a synchronized block are visible
+                          to ALL threads after the lock is released.
+
+How it works internally:
+  Every Java object has a built-in MONITOR LOCK (also called intrinsic lock or
+  mutex). When a thread enters a synchronized block, it acquires the lock.
+  When it exits, it releases the lock. Other threads trying to enter BLOCK
+  until the lock is free.
+
+Key terms:
+  Monitor Lock    = The built-in lock on every Java object
+  Acquire         = A thread takes ownership of the lock
+  Release         = A thread gives up ownership after finishing
+  Blocked state   = Thread waiting to acquire a lock another thread holds
+
+--------------------------------------------------------------------------------
+3. FOUR FORMS OF synchronized
+--------------------------------------------------------------------------------
+
+Form 1: Synchronized INSTANCE Method
+Form 2: Synchronized STATIC Method
+Form 3: Synchronized BLOCK (on this)
+Form 4: Synchronized BLOCK (on a custom object)
+
+========================================
+FORM 1: Synchronized INSTANCE Method
+========================================
+
+Locks on: the CURRENT OBJECT (this)
+Scope:    The entire method body
+
+public class Counter {
+    private int count = 0;
+
+    // Lock acquired on "this" object when any thread calls this
+    public synchronized void increment() {
+        count++;
+    }
+
+    public synchronized int getCount() {
+        return count;
+    }
+
+    public static void main(String[] args) throws InterruptedException {
+        Counter c = new Counter();
+
+        Thread t1 = new Thread(() -> {
+            for (int i = 0; i < 10000; i++) c.increment();
+        });
+        Thread t2 = new Thread(() -> {
+            for (int i = 0; i < 10000; i++) c.increment();
+        });
+
+        t1.start(); t2.start();
+        t1.join();  t2.join();
+
+        System.out.println("Count: " + c.getCount()); // Always 20000
+    }
+}
+
+Important: Two synchronized instance methods on the SAME object share
+the SAME lock. If Thread-1 is inside increment(), Thread-2 cannot enter
+getCount() either — both are locked on "this".
+
+========================================
+FORM 2: Synchronized STATIC Method
+========================================
+
+Locks on: the CLASS OBJECT (Counter.class), not an instance
+Scope:    The entire static method body
+Use when: Protecting class-level (static) shared data
+
+public class StaticCounter {
+    private static int count = 0;
+
+    // Locks on StaticCounter.class
+    public static synchronized void increment() {
+        count++;
+    }
+
+    public static synchronized int getCount() {
+        return count;
+    }
+
+    public static void main(String[] args) throws InterruptedException {
+        Thread t1 = new Thread(() -> {
+            for (int i = 0; i < 10000; i++) StaticCounter.increment();
+        });
+        Thread t2 = new Thread(() -> {
+            for (int i = 0; i < 10000; i++) StaticCounter.increment();
+        });
+
+        t1.start(); t2.start();
+        t1.join();  t2.join();
+
+        System.out.println("Count: " + StaticCounter.getCount()); // Always 20000
+    }
+}
+
+IMPORTANT distinction:
+  Static synchronized  → locks on MyClass.class (one lock per class)
+  Instance synchronized → locks on this (one lock per object instance)
+  These are TWO DIFFERENT locks — they do NOT block each other!
+
+========================================
+FORM 3: Synchronized BLOCK on "this"
+========================================
+
+Locks on: the current object (this)
+Scope:    Only the lines inside the block — more fine-grained than full method
+Use when: Only part of a method needs protection (reduce contention)
+
+public class PartialSync {
+    private int counter = 0;
+    private String log   = "";
+
+    public void process(int value) {
+        // Non-critical code runs WITHOUT lock (faster)
+        String message = "Processing: " + value;
+
+        // Critical section — only this part is locked
+        synchronized (this) {
+            counter += value;
+            log += message + "\n";
+        }
+
+        // More non-critical work — runs without lock
+        System.out.println(message);
+    }
+}
+
+Rule of thumb: Synchronize as LITTLE as possible — the smallest critical
+section that needs protection. Never lock more than necessary.
+
+========================================
+FORM 4: Synchronized BLOCK on a Custom Object (Lock Object)
+========================================
+
+Locks on: a dedicated private lock object (best practice for classes)
+Scope:    The block inside
+Use when: You want a private, explicit lock that nobody outside can interfere
+          with. Avoids issues where external code also synchronizes on "this".
+
+public class BankAccount {
+
+    private double balance;
+    private final Object lock = new Object(); // private dedicated lock
+
+    public BankAccount(double initialBalance) {
+        this.balance = initialBalance;
+    }
+
+    public void deposit(double amount) {
+        synchronized (lock) {   // Locks on the private object, not "this"
+            if (amount > 0) {
+                balance += amount;
+                System.out.println(Thread.currentThread().getName()
+                    + " deposited " + amount + " | Balance: " + balance);
+            }
+        }
+    }
+
+    public void withdraw(double amount) {
+        synchronized (lock) {
+            if (amount > 0 && balance >= amount) {
+                balance -= amount;
+                System.out.println(Thread.currentThread().getName()
+                    + " withdrew " + amount + " | Balance: " + balance);
+            } else {
+                System.out.println(Thread.currentThread().getName()
+                    + " — insufficient funds");
+            }
+        }
+    }
+
+    public double getBalance() {
+        synchronized (lock) {
+            return balance;
+        }
+    }
+
+    public static void main(String[] args) throws InterruptedException {
+        BankAccount account = new BankAccount(1000);
+
+        Thread t1 = new Thread(() -> {
+            for (int i = 0; i < 5; i++) account.deposit(100);
+        }, "Thread-Deposit");
+
+        Thread t2 = new Thread(() -> {
+            for (int i = 0; i < 5; i++) account.withdraw(150);
+        }, "Thread-Withdraw");
+
+        t1.start(); t2.start();
+        t1.join();  t2.join();
+
+        System.out.println("Final Balance: " + account.getBalance());
+    }
+}
+
+--------------------------------------------------------------------------------
+4. SYNCHRONIZED AND VISIBILITY — the "happens-before" guarantee
+--------------------------------------------------------------------------------
+
+synchronized doesn't just prevent simultaneous access — it also guarantees
+MEMORY VISIBILITY.
+
+Without synchronization:
+  Thread-1 updates a variable → stored in CPU cache, NOT flushed to main memory
+  Thread-2 reads the variable → may read the STALE value from its own cache
+
+With synchronized:
+  When Thread-1 RELEASES a lock → all writes are flushed to main memory
+  When Thread-2 ACQUIRES the same lock → it reads fresh values from main memory
+
+This is called the HAPPENS-BEFORE relationship.
+  "Everything Thread-1 did before releasing the lock is VISIBLE to
+   Thread-2 after it acquires the same lock."
+
+Example demonstrating visibility:
+------------------------------------------
+
+public class VisibilityDemo {
+    private static boolean flag = false; // shared between threads
+
+    public static synchronized void setFlag() {
+        flag = true; // flushed to main memory on lock release
+    }
+
+    public static synchronized boolean getFlag() {
+        return flag; // always reads fresh from main memory on lock acquire
+    }
+
+    public static void main(String[] args) throws InterruptedException {
+        Thread writer = new Thread(() -> {
+            try { Thread.sleep(500); } catch (InterruptedException e) {}
+            setFlag();
+            System.out.println("Writer: flag set to true");
+        });
+
+        Thread reader = new Thread(() -> {
+            while (!getFlag()) {
+                // waits until flag is true
+            }
+            System.out.println("Reader: saw flag = true");
+        });
+
+        reader.start();
+        writer.start();
+        writer.join();
+        reader.join();
+    }
+}
+
+--------------------------------------------------------------------------------
+5. INTER-THREAD COMMUNICATION — wait(), notify(), notifyAll()
+--------------------------------------------------------------------------------
+
+These methods only work INSIDE a synchronized block/method.
+They are defined on java.lang.Object (not Thread).
+
+Method             | What it does
+-------------------|--------------------------------------------------------------
+wait()             | Releases the lock and puts current thread in WAITING state.
+                   | Thread waits until another thread calls notify() or notifyAll().
+notify()           | Wakes up ONE thread waiting on this object's lock (random choice).
+notifyAll()        | Wakes up ALL threads waiting on this object's lock.
+
+Rule: Always call wait() inside a LOOP (not an if), to re-check the condition
+      after waking up (to guard against spurious wakeups).
+
+Classic Producer-Consumer using wait/notify:
+--------------------------------------------
+
+public class ProducerConsumer {
+
+    static final Object lock = new Object();
+    static int          data  = 0;
+    static boolean      ready = false;
+
+    // PRODUCER
+    static class Producer implements Runnable {
+        @Override
+        public void run() {
+            for (int i = 1; i <= 5; i++) {
+                synchronized (lock) {
+                    while (ready) {          // wait if buffer full
+                        try { lock.wait(); } catch (InterruptedException e) {}
+                    }
+                    data  = i * 10;
+                    ready = true;
+                    System.out.println("Produced: " + data);
+                    lock.notify();           // wake up consumer
+                }
+            }
+        }
+    }
+
+    // CONSUMER
+    static class Consumer implements Runnable {
+        @Override
+        public void run() {
+            for (int i = 1; i <= 5; i++) {
+                synchronized (lock) {
+                    while (!ready) {         // wait if buffer empty
+                        try { lock.wait(); } catch (InterruptedException e) {}
+                    }
+                    System.out.println("Consumed: " + data);
+                    ready = false;
+                    lock.notify();           // wake up producer
+                }
+            }
+        }
+    }
+
+    public static void main(String[] args) throws InterruptedException {
+        Thread producer = new Thread(new Producer(), "Producer");
+        Thread consumer = new Thread(new Consumer(), "Consumer");
+        consumer.start();
+        producer.start();
+        producer.join();
+        consumer.join();
+    }
+}
+
+Output (always ordered):
+  Produced: 10
+  Consumed: 10
+  Produced: 20
+  Consumed: 20
+  ...and so on
+
+--------------------------------------------------------------------------------
+6. REENTRANT / RECURSIVE SYNCHRONIZED
+--------------------------------------------------------------------------------
+
+Java's synchronized is REENTRANT (also called re-entrant).
+A thread that already holds a lock CAN re-enter the same synchronized block
+or call another synchronized method on the same object — it won't deadlock itself.
+
+public class ReentrantExample {
+
+    public synchronized void outer() {
+        System.out.println("In outer");
+        inner(); // calls another synchronized method on same object — SAFE
+    }
+
+    public synchronized void inner() {
+        System.out.println("In inner");
+    }
+
+    public static void main(String[] args) {
+        new ReentrantExample().outer();
+        // Output:
+        // In outer
+        // In inner
+    }
+}
+
+Why it works: The JVM tracks a "hold count" for each lock. The same thread can
+acquire the same lock multiple times. The lock is only fully released when the
+hold count drops to zero.
+
+--------------------------------------------------------------------------------
+7. COMMON PITFALLS WITH synchronized
+--------------------------------------------------------------------------------
+
+PITFALL 1: Synchronizing on different objects (no mutual exclusion)
+---------------------------------------------------------------------
+
+public class WrongLock {
+    private int count = 0;
+
+    public void increment() {
+        Object localLock = new Object(); // NEW object every call — WRONG!
+        synchronized (localLock) {
+            count++; // Each thread gets its OWN lock — no protection!
+        }
+    }
+}
+
+Fix: Always synchronize on a SHARED object (this, a class field, or class).
+
+
+PITFALL 2: Holding a lock too long (kills performance)
+-------------------------------------------------------
+
+public void processAndLog(String data) {
+    synchronized (this) {
+        expensiveNetworkCall(data); // No need to lock this!
+        counter++;                  // Only this needs locking
+        writeToFile(data);          // No need to lock this either!
+    }
+}
+
+Fix: Lock only the minimum critical section:
+    expensiveNetworkCall(data);  // outside lock
+    synchronized (this) { counter++; }
+    writeToFile(data);           // outside lock
+
+
+PITFALL 3: Calling wait() without a loop (spurious wakeups)
+------------------------------------------------------------
+
+// WRONG — using if
+synchronized (lock) {
+    if (!condition) lock.wait(); // Thread may wake up without condition being true!
+    doWork();
+}
+
+// CORRECT — using while
+synchronized (lock) {
+    while (!condition) lock.wait(); // Re-checks condition after waking up
+    doWork();
+}
+
+PITFALL 4: Deadlock
+-------------------
+Occurs when Thread-1 holds Lock A and waits for Lock B, while Thread-2 holds
+Lock B and waits for Lock A. Both are stuck forever.
+
+public class DeadlockExample {
+    static final Object lockA = new Object();
+    static final Object lockB = new Object();
+
+    public static void main(String[] args) {
+        Thread t1 = new Thread(() -> {
+            synchronized (lockA) {
+                System.out.println("T1 holds A, waiting for B...");
+                try { Thread.sleep(100); } catch (InterruptedException e) {}
+                synchronized (lockB) { System.out.println("T1 got B"); }
+            }
+        });
+
+        Thread t2 = new Thread(() -> {
+            synchronized (lockB) {
+                System.out.println("T2 holds B, waiting for A...");
+                try { Thread.sleep(100); } catch (InterruptedException e) {}
+                synchronized (lockA) { System.out.println("T2 got A"); }
+            }
+        });
+
+        t1.start();
+        t2.start();
+        // Program hangs — DEADLOCK
+    }
+}
+
+Fix: Always acquire locks in the SAME ORDER in all threads:
+    // Both threads: lock A first, then B — deadlock impossible
+    synchronized (lockA) {
+        synchronized (lockB) { ... }
+    }
+
+--------------------------------------------------------------------------------
+8. synchronized vs OTHER THREAD-SAFETY TOOLS
+--------------------------------------------------------------------------------
+
+Tool              | Mutual Exclusion | Visibility | Returns Value | Fairness
+------------------|------------------|------------|---------------|----------
+synchronized      | YES              | YES        | NO            | NO
+volatile          | NO               | YES        | NO            | N/A
+AtomicInteger     | YES (CAS)        | YES        | YES           | NO
+ReentrantLock     | YES              | YES        | NO            | YES (opt)
+ReadWriteLock     | YES (split R/W)  | YES        | NO            | YES (opt)
+
+When to choose what:
+  synchronized    → Simple mutual exclusion; default choice.
+  volatile        → Single-variable visibility only; simple flags.
+  AtomicInteger   → Lock-free counter; highest performance for counters.
+  ReentrantLock   → Need tryLock(), timeout, or fair ordering.
+  ReadWriteLock   → Many readers, few writers (e.g., cache).
+
+--------------------------------------------------------------------------------
+9. REAL-WORLD EXAMPLES
+--------------------------------------------------------------------------------
+
+Example A: Thread-Safe Singleton (Double-Checked Locking)
+----------------------------------------------------------
+
+public class Singleton {
+    // volatile ensures visibility of the instance across threads
+    private static volatile Singleton instance = null;
+
+    private Singleton() {}
+
+    public static Singleton getInstance() {
+        if (instance == null) {                   // First check (no lock, fast)
+            synchronized (Singleton.class) {
+                if (instance == null) {           // Second check (inside lock)
+                    instance = new Singleton();
+                }
+            }
+        }
+        return instance;
+    }
+}
+
+Why double-check?
+  - First check avoids locking every time (performance).
+  - Second check prevents two threads both passing the first check from
+    creating two instances.
+  - volatile prevents instruction reordering during object creation.
+
+
+Example B: Thread-Safe Cache
+-----------------------------
+
+import java.util.HashMap;
+import java.util.Map;
+
+public class ThreadSafeCache {
+    private final Map<String, String> cache = new HashMap<>();
+    private final Object lock = new Object();
+
+    public String get(String key) {
+        synchronized (lock) {
+            return cache.get(key);
+        }
+    }
+
+    public void put(String key, String value) {
+        synchronized (lock) {
+            cache.put(key, value);
+        }
+    }
+
+    public String getOrCompute(String key) {
+        synchronized (lock) {
+            if (!cache.containsKey(key)) {
+                String value = expensiveCompute(key); // called inside lock
+                cache.put(key, value);
+            }
+            return cache.get(key);
+        }
+    }
+
+    private String expensiveCompute(String key) {
+        return "result_for_" + key;
+    }
+}
+
+Note: In production, prefer ConcurrentHashMap for better performance.
+      It uses segment-level locking instead of a single global lock.
+
+
+Example C: Synchronized Stack
+------------------------------
+
+public class SyncStack<T> {
+    private final java.util.LinkedList<T> list = new java.util.LinkedList<>();
+
+    public synchronized void push(T item) {
+        list.addFirst(item);
+        System.out.println(Thread.currentThread().getName() + " pushed: " + item);
+    }
+
+    public synchronized T pop() {
+        if (list.isEmpty()) {
+            throw new java.util.EmptyStackException();
+        }
+        T item = list.removeFirst();
+        System.out.println(Thread.currentThread().getName() + " popped: " + item);
+        return item;
+    }
+
+    public synchronized int size() {
+        return list.size();
+    }
+
+    public static void main(String[] args) throws InterruptedException {
+        SyncStack<Integer> stack = new SyncStack<>();
+
+        Thread pusher = new Thread(() -> {
+            for (int i = 1; i <= 5; i++) stack.push(i);
+        }, "Pusher");
+
+        Thread popper = new Thread(() -> {
+            try { Thread.sleep(10); } catch (InterruptedException e) {}
+            for (int i = 0; i < 5; i++) stack.pop();
+        }, "Popper");
+
+        pusher.start(); popper.start();
+        pusher.join();  popper.join();
+    }
+}
+
+--------------------------------------------------------------------------------
+10. INTERVIEW QUESTIONS & ANSWERS
+--------------------------------------------------------------------------------
+
+Q1: What is the synchronized keyword in Java?
+A:  synchronized is a keyword that ensures mutual exclusion and memory
+    visibility for a block or method. Only one thread can execute a
+    synchronized section at a time by acquiring the object's monitor lock.
+    It also guarantees that changes are visible to all threads after the
+    lock is released.
+
+Q2: What are the different ways to use synchronized?
+A:  Four ways:
+    1. Synchronized instance method   — locks on 'this'
+    2. Synchronized static method     — locks on ClassName.class
+    3. Synchronized block on 'this'   — fine-grained, locks on 'this'
+    4. Synchronized block on an object— locks on a custom/private lock object
+    Instance and static locks are DIFFERENT — they don't block each other.
+
+Q3: What is a monitor lock (intrinsic lock)?
+A:  Every Java object has a built-in monitor lock. When a thread enters a
+    synchronized method or block, it acquires that object's monitor lock.
+    Other threads trying to enter any synchronized section on the SAME object
+    will block until the lock is released. There is one monitor lock per object.
+
+Q4: What is the difference between synchronized method and synchronized block?
+A:  A synchronized method locks the entire method body. A synchronized block
+    locks only the specified critical section. Synchronized blocks are preferred
+    when only part of the method needs protection — they reduce contention and
+    improve performance by holding the lock for less time.
+
+Q5: Can two threads execute synchronized methods on different objects at the
+    same time?
+A:  YES. Each object has its own lock. Thread-1 can be in a synchronized method
+    of object A while Thread-2 is in a synchronized method of object B —
+    they use different locks and don't block each other.
+
+Q6: What happens if a thread calls wait() outside a synchronized block?
+A:  It throws java.lang.IllegalMonitorStateException. wait(), notify(), and
+    notifyAll() can ONLY be called from within a synchronized context because
+    they require the calling thread to own the object's monitor lock.
+
+Q7: What is the difference between wait() and sleep()?
+A:  sleep() pauses the thread for a fixed time and does NOT release the lock.
+    wait() pauses the thread AND releases the lock, allowing other threads to
+    enter. wait() is used for inter-thread coordination; sleep() is used for
+    time delays. Both are interruptible.
+
+Q8: Why should wait() always be called inside a while loop, not an if?
+A:  Because of SPURIOUS WAKEUPS — a thread may wake up even without a
+    notify() call (JVM/OS behavior). Using a while loop re-checks the condition
+    after waking up and goes back to wait() if the condition is still false.
+    Using if risks proceeding even when the condition is not satisfied.
+
+Q9: What is a deadlock? How does synchronized cause it?
+A:  Deadlock occurs when Thread-1 holds Lock A and waits for Lock B, while
+    Thread-2 holds Lock B and waits for Lock A — both block forever.
+    synchronized causes it when threads acquire multiple locks in different
+    orders. Prevention: always acquire locks in the same consistent order,
+    or use ReentrantLock.tryLock() with a timeout.
+
+Q10: Is synchronized reentrant in Java?
+A:   YES. If a thread already holds a lock, it can re-enter another
+     synchronized method on the same object without deadlocking. The JVM
+     tracks a reentry count. The lock is fully released only when the count
+     reaches zero. This allows synchronized methods to safely call other
+     synchronized methods on the same object.
+
+Q11: What is the difference between synchronized(this) and
+     synchronized(SomeClass.class)?
+A:   synchronized(this) locks the current instance — multiple instances of the
+     class have their own independent locks.
+     synchronized(SomeClass.class) locks the Class object — one lock shared
+     across ALL instances of that class. Use the class-level lock for
+     protecting static (shared) data.
+
+Q12: Can we synchronize a constructor?
+A:   NO. Constructors cannot be synchronized because an object being
+     constructed is only accessible to the creating thread — no other thread
+     can see it yet. The keyword is not allowed on constructors and the compiler
+     will throw an error if you try.
+
+Q13: Does synchronized guarantee ordering of thread execution?
+A:   NO. synchronized guarantees mutual exclusion and visibility — it does NOT
+     guarantee which thread acquires the lock next. Thread scheduling depends on
+     the JVM and OS. If ordering matters, use mechanisms like CountDownLatch,
+     Semaphore, or explicitly passing work between threads.
+
+Q14: What is the happens-before relationship in synchronized?
+A:   "Happens-before" means: all actions performed by Thread-1 BEFORE
+     releasing a lock are guaranteed to be VISIBLE to Thread-2 AFTER it
+     acquires the same lock. This prevents stale reads from CPU caches.
+     It is the formal guarantee that synchronized provides for memory
+     visibility across threads.
+
+Q15: What is the difference between synchronized and volatile?
+A:   volatile only guarantees VISIBILITY — all threads see the latest value
+     of a variable. It does NOT guarantee atomicity. Example: count++ is
+     NOT safe with volatile alone (it's read-modify-write).
+     synchronized guarantees BOTH mutual exclusion and visibility. Use
+     volatile only for simple flags or single reads/writes; use synchronized
+     (or Atomic classes) when compound operations are involved.
+
+Q16: What is the difference between synchronized and ReentrantLock?
+A:   synchronized is implicit (keyword), auto-releases on exit, cannot
+     time out, and has no fairness option.
+     ReentrantLock is explicit (lock()/unlock()), must be manually released
+     in a finally block, supports tryLock() with timeout, interruption, and
+     optional fairness (threads wait in FIFO order). Use ReentrantLock when
+     you need advanced features; synchronized for straightforward cases.
+
+Q17: What is double-checked locking? Where is synchronized used?
+A:   Double-checked locking is a pattern for lazy Singleton initialization.
+     synchronized (ClassName.class) is used only when instance is null,
+     with a second null check inside the synchronized block. The instance
+     field must also be volatile to prevent instruction reordering.
+     This gives thread safety while avoiding the cost of locking on every call.
+
+Q18: Can a thread hold multiple locks simultaneously?
+A:   YES. A thread can enter nested synchronized blocks on different objects,
+     holding all those locks at the same time. This is what enables deadlocks
+     when two threads acquire the same pair of locks in opposite orders.
+
+Q19: What is a livelock? How is it different from deadlock?
+A:   Deadlock: threads are STUCK, waiting for each other, doing nothing.
+     Livelock: threads are ACTIVE, but keep reacting to each other and
+     making no progress (like two people in a hallway both stepping aside
+     in the same direction endlessly). Both are concurrency hazards, but
+     livelock is harder to detect because CPU usage remains high.
+
+Q20: What is thread starvation and how can synchronized cause it?
+A:   Starvation: a thread is perpetually denied the lock because other
+     threads always acquire it first. synchronized has no fairness guarantee
+     — any waiting thread can be next. High-priority or frequently running
+     threads may monopolize the lock, starving low-priority threads.
+     Fix: use ReentrantLock(true) for fair lock acquisition (FIFO order).
+
+================================================================================
+                          QUICK REFERENCE SUMMARY
+================================================================================
+
+4 Forms of synchronized:
+  synchronized method (instance)  → locks on this
+  synchronized method (static)    → locks on ClassName.class
+  synchronized block (this)       → fine-grained, locks on this
+  synchronized block (object)     → locks on a custom private object  ← BEST
+
+Rules:
+  - Synchronize on SHARED objects — never on local variables
+  - Synchronize as LITTLE as possible — smallest critical section
+  - Always use while (not if) with wait()
+  - Acquire multiple locks in CONSISTENT ORDER to prevent deadlock
+  - Constructors CANNOT be synchronized
+  - wait/notify/notifyAll MUST be called inside synchronized
+
+Key guarantees:
+  Mutual exclusion  → only one thread in the block at a time
+  Memory visibility → happens-before: all writes flushed on lock release,
+                      all reads refreshed on lock acquire
+
+synchronized vs alternatives:
+  volatile      → visibility only, no atomicity
+  AtomicInteger → lock-free counter, best performance for single variables
+  ReentrantLock → advanced: tryLock, timeout, fairness, interruptible
+
+================================================================================

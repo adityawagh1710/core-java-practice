@@ -1,0 +1,119 @@
+--------------------------------------------------------------------------------
+JAVA SYNCHRONIZED + LOCKS + DEADLOCK
+--------------------------------------------------------------------------------
+
+1.  WHAT IS SYNCHRONIZED?
+
+Synchronized is a keyword in Java used to control access to shared
+resources. Only one thread can access critical section at a time.
+
+--------------------------------------------------------------------------------
+
+2.  TYPES OF SYNCHRONIZATION
+
+(1) Method Level synchronized void increment() { count++; }
+
+(2) Block Level synchronized(this) { count++; }
+
+(3) Static synchronized void increment() { count++; }
+
+--------------------------------------------------------------------------------
+
+3.  REAL-TIME EXAMPLES
+
+(1) Bank Account synchronized void withdraw(int amount) { if(balance >=
+    amount) balance -= amount; }
+
+(2) Ticket Booking synchronized void book() { seats–; }
+
+--------------------------------------------------------------------------------
+
+4.  LOCK INTERFACE (java.util.concurrent.locks)
+
+More flexible than synchronized
+
+Example:
+
+import java.util.concurrent.locks.*;
+
+class Counter { int count = 0; Lock lock = new ReentrantLock();
+
+    void increment() {
+        lock.lock();
+        try {
+            count++;
+        } finally {
+            lock.unlock();
+        }
+    }
+
+}
+
+--------------------------------------------------------------------------------
+
+5.  REENTRANT LOCK
+
+Same thread can acquire lock multiple times
+
+Lock lock = new ReentrantLock(true); // fair lock
+
+Advantages: - tryLock() - fairness policy - better control
+
+--------------------------------------------------------------------------------
+
+6.  SYNCHRONIZED vs LOCK
+
+Synchronized: - Simpler - Automatic lock release
+
+Lock: - More control - Manual unlock - tryLock support
+
+--------------------------------------------------------------------------------
+
+7.  DEADLOCK
+
+When two threads wait forever for each other
+
+Example:
+
+class A { synchronized void methodA(B b) { b.last(); } synchronized void
+last() {} }
+
+class B { synchronized void methodB(A a) { a.last(); } synchronized void
+last() {} }
+
+--------------------------------------------------------------------------------
+
+8.  DEADLOCK PREVENTION
+
+-   Avoid nested locks
+-   Use consistent lock order
+-   Use tryLock()
+-   Timeout handling
+
+--------------------------------------------------------------------------------
+
+9.  INTERVIEW QUESTIONS
+
+Q1: Difference between synchronized and Lock? Ans: Lock gives more
+flexibility and features like tryLock
+
+Q2: What is ReentrantLock? Ans: Lock where same thread can acquire
+multiple times
+
+Q3: What is deadlock? Ans: Threads waiting forever for each other
+
+Q4: How to prevent deadlock? Ans: Lock ordering, tryLock, avoid nested
+locks
+
+Q5: What is fairness policy? Ans: Threads get lock in order of request
+
+--------------------------------------------------------------------------------
+
+10. BEST PRACTICES
+
+-   Prefer synchronized for simple cases
+-   Use Lock for complex scenarios
+-   Always release lock in finally block
+-   Avoid deadlocks
+
+--------------------------------------------------------------------------------
