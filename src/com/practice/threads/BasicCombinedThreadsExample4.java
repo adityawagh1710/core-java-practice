@@ -26,7 +26,7 @@ class OrderProcessor implements Runnable {
 				+ Thread.currentThread().getName() + " at " + myObj);
 		
 		try {
-			Thread.sleep(3000); // simulate processing
+			Thread.sleep(2000); // simulate processing
 		} catch (InterruptedException exception) {
 			exception.printStackTrace();
 		}
@@ -37,7 +37,7 @@ class OrderProcessor implements Runnable {
 }
 
 public class BasicCombinedThreadsExample4 {
-	public static void main(String[] args) {
+	public static void main(String[] args) throws InterruptedException {
 		Thread t1 = new Thread(new OrderProcessor(101));
 		Thread t2 = new Thread(new OrderProcessor(102));
 		
@@ -45,6 +45,8 @@ public class BasicCombinedThreadsExample4 {
 		t2.setName("Order-Thread-2");
 		
 		t1.start();
+		t1.join();
 		t2.start();
+		t2.join();
 	}
 }
