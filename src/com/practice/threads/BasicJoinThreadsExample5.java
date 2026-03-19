@@ -4,7 +4,11 @@ public class BasicJoinThreadsExample5 {
 	public static void main(String[] args) throws InterruptedException {
 		Thread t = new Thread(() -> {
 			System.out.println("Worker thread doing work...");
-			try { Thread.sleep(1000); } catch (InterruptedException ignored) {}
+			try {
+				Thread.sleep(1000);
+			} catch (InterruptedException exception) {
+				exception.printStackTrace();
+			}
 			System.out.println("Worker thread done.");
 		});
 		
