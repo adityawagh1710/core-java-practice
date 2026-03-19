@@ -1,0 +1,667 @@
+--------------------------------------------------------------------------------
+1. WHAT IS A THREAD?
+--------------------------------------------------------------------------------
+
+A thread is the smallest unit of execution within a program. Java supports
+multithreading, meaning multiple threads can run concurrently within a single
+Java program (process).
+
+Key Terms:
+  - Process     : An independent program running in its own memory space.
+  - Thread      : A lightweight subunit of a process that shares memory.
+  - Concurrency : Multiple threads making progress (not necessarily at once).
+  - Parallelism : Multiple threads executing at the exact same time (multicore).
+
+Thread States (java.lang.Thread.State):
+  NEW           -> Thread created but not yet started.
+  RUNNABLE      -> Thread is running or ready to run.
+  BLOCKED       -> Waiting to acquire a monitor lock.
+  WAITING       -> Waiting indefinitely for another thread to act.
+  TIMED_WAITING -> Waiting for a specified amount of time.
+  TERMINATED    -> Thread has finished execution.
+
+--------------------------------------------------------------------------------
+2. CREATING THREADS — TWO CLASSIC WAYS
+--------------------------------------------------------------------------------
+
+===== WAY 1: Extend Thread class =====
+
+public class MyThread extends Thread {
+    @Override
+    public void run() {
+        System.out.println("Thread running: " + Thread.currentThread().getName());
+    }
+
+    public static void main(String[] args) {
+        MyThread t1 = new MyThread();
+        MyThread t2 = new MyThread();
+        t1.start(); // Starts a new thread — do NOT call run() directly!
+        t2.start();
+    }
+}
+
+Output (order may vary):
+  Thread running: Thread-0
+  Thread running: Thread-1
+
+===== WAY 2: Implement Runnable interface (PREFERRED) =====
+
+public class MyRunnable implements Runnable {
+    @Override
+    public void run() {
+        System.out.println("Runnable running: " + Thread.currentThread().getName());
+    }
+
+    public static void main(String[] args) {
+        Thread t1 = new Thread(new MyRunnable());
+        Thread t2 = new Thread(new MyRunnable());
+        t1.start();
+        t2.start();
+    }
+}
+
+Why prefer Runnable over extending Thread?
+  - Java supports single inheritance; implementing Runnable leaves you free
+    to extend another class.
+  - It separates the task (Runnable) from the thread mechanism (Thread).
+  - It is compatible with Executor frameworks.
+
+===== WAY 3: Lambda (Runnable as lambda) =====
+
+public class LambdaThread {
+    public static void main(String[] args) {
+        Thread t1 = new Thread(() -> {
+            System.out.println("Lambda thread: " + Thread.currentThread().getName());
+        });
+        t1.setName("MyLambdaThread");
+        t1.start();
+    }
+}
+
+--------------------------------------------------------------------------------
+3. IMPORTANT THREAD METHODS
+--------------------------------------------------------------------------------
+
+Method                   | Description
+-------------------------|---------------------------------------------------
+start()                  | Starts the thread; JVM calls run() internally.
+run()                    | The task to execute. Call start(), NOT run().
+sleep(long ms)           | Pauses current thread for given milliseconds.
+join()                   | Waits for thread to finish before continuing.
+interrupt()              | Interrupts a sleeping/waiting thread.
+isAlive()                | Returns true if thread has started and not died.
+setName(String)          | Sets a name for the thread.
+getName()                | Gets the thread's name.
+setPriority(int)         | Sets priority (1=MIN, 5=NORM, 10=MAX).
+setDaemon(boolean)       | Marks thread as daemon (background) thread.
+Thread.currentThread()   | Returns the currently executing thread.
+Thread.yield()           | Suggests the scheduler to let other threads run.
+
+===== sleep() Example =====
+
+public class SleepExample {
+    public static void main(String[] args) throws InterruptedException {
+        System.out.println("Start");
+        Thread.sleep(2000); // Pauses for 2 seconds
+        System.out.println("After 2 seconds");
+    }
+}
+
+===== join() Example =====
+
+public class JoinExample {
+    public static void main(String[] args) throws InterruptedException {
+        Thread t = new Thread(() -> {
+            System.out.println("Worker thread doing work...");
+            try { Thread.sleep(1000); } catch (InterruptedException e) {}
+            System.out.println("Worker thread done.");
+        });
+
+        t.start();
+        t.join(); // Main thread waits for t to finish
+        System.out.println("Main thread continues after worker.");
+    }
+}
+
+Output (guaranteed order):
+  Worker thread doing work...
+  Worker thread done.
+  Main thread continues after worker.
+
+--------------------------------------------------------------------------------
+4. SYNCHRONIZATION — PREVENTING RACE CONDITIONS
+--------------------------------------------------------------------------------
+
+A race condition occurs when two threads access/modify shared data concurrently
+and the result depends on the order of execution.
+
+===== Problem: Unsynchronized Counter =====
+
+public class UnsafeCounter {
+    static int count = 0;
+
+    public static void main(String[] args) throws InterruptedException {
+        Runnable task = () -> {
+            for (int i = 0; i < 1000; i++) count++;
+        };
+
+        Thread t1 = new Thread(task);
+        Thread t2 = new Thread(task);
+        t1.start(); t2.start();
+        t1.join();  t2.join();
+
+        System.out.println("Count: " + count); // Often NOT 2000!
+    }
+}
+
+===== Fix 1: synchronized method =====
+
+public class SafeCounter {
+    static int count = 0;
+
+    public static synchronized void increment() {
+        count++;
+    }
+
+    public static void main(String[] args) throws InterruptedException {
+        Runnable task = () -> {
+            for (int i = 0; i < 1000; i++) increment();
+        };
+
+        Thread t1 = new Thread(task);
+        Thread t2 = new Thread(task);
+        t1.start(); t2.start();
+        t1.join();  t2.join();
+
+        System.out.println("Count: " + count); // Always 2000
+    }
+}
+
+===== Fix 2: synchronized block =====
+
+public class SyncBlock {
+    static int count = 0;
+    static final Object lock = new Object();
+
+    public static void main(String[] args) throws InterruptedException {
+        Runnable task = () -> {
+            for (int i = 0; i < 1000; i++) {
+                synchronized (lock) {
+                    count++;
+                }
+            }
+        };
+
+        Thread t1 = new Thread(task);
+        Thread t2 = new Thread(task);
+        t1.start(); t2.start();
+        t1.join();  t2.join();
+
+        System.out.println("Count: " + count); // Always 2000
+    }
+}
+
+===== Fix 3: AtomicInteger (lock-free, preferred for counters) =====
+
+import java.util.concurrent.atomic.AtomicInteger;
+
+public class AtomicCounter {
+    static AtomicInteger count = new AtomicInteger(0);
+
+    public static void main(String[] args) throws InterruptedException {
+        Runnable task = () -> {
+            for (int i = 0; i < 1000; i++) count.incrementAndGet();
+        };
+
+        Thread t1 = new Thread(task);
+        Thread t2 = new Thread(task);
+        t1.start(); t2.start();
+        t1.join();  t2.join();
+
+        System.out.println("Count: " + count); // Always 2000
+    }
+}
+
+--------------------------------------------------------------------------------
+5. EXECUTOR FRAMEWORK (java.util.concurrent)
+--------------------------------------------------------------------------------
+
+The Executor framework is the modern way to manage threads.
+Avoid creating raw threads manually in production code.
+
+===== ExecutorService with fixed thread pool =====
+
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+
+public class ExecutorExample {
+    public static void main(String[] args) throws InterruptedException {
+        ExecutorService executor = Executors.newFixedThreadPool(3); // 3 threads
+
+        for (int i = 1; i <= 6; i++) {
+            int taskId = i;
+            executor.submit(() -> {
+                System.out.println("Task " + taskId + " on " 
+                                   + Thread.currentThread().getName());
+            });
+        }
+
+        executor.shutdown(); // No new tasks accepted
+        executor.awaitTermination(5, java.util.concurrent.TimeUnit.SECONDS);
+        System.out.println("All tasks done.");
+    }
+}
+
+Common Executors:
+  Executors.newFixedThreadPool(n)      -> Fixed number of threads.
+  Executors.newCachedThreadPool()      -> Grows as needed, reuses idle threads.
+  Executors.newSingleThreadExecutor()  -> Only one thread (sequential).
+  Executors.newScheduledThreadPool(n)  -> For delayed/periodic tasks.
+
+===== Callable and Future (return a result) =====
+
+import java.util.concurrent.*;
+
+public class CallableFutureExample {
+    public static void main(String[] args) throws Exception {
+        ExecutorService executor = Executors.newFixedThreadPool(2);
+
+        Callable<Integer> task = () -> {
+            Thread.sleep(1000);
+            return 42;
+        };
+
+        Future<Integer> future = executor.submit(task);
+
+        System.out.println("Waiting for result...");
+        int result = future.get(); // Blocks until result is ready
+        System.out.println("Result: " + result); // 42
+
+        executor.shutdown();
+    }
+}
+
+Runnable vs Callable:
+  Runnable  -> No return value, cannot throw checked exceptions.
+  Callable  -> Returns a value, can throw checked exceptions.
+
+--------------------------------------------------------------------------------
+6. VIRTUAL THREADS (Java 21 — Project Loom)
+--------------------------------------------------------------------------------
+
+Virtual threads are lightweight threads managed by the JVM, not the OS.
+They are designed for high-throughput concurrent applications (e.g., servers).
+
+Key Points:
+  - Cheap to create (millions can exist simultaneously).
+  - Do NOT replace platform threads for CPU-bound tasks.
+  - Ideal for I/O-bound tasks (DB calls, HTTP requests).
+  - Created via Thread.ofVirtual() or Executors.newVirtualThreadPerTaskExecutor().
+
+===== Creating a virtual thread =====
+
+public class VirtualThreadExample {
+    public static void main(String[] args) throws InterruptedException {
+        // Way 1: Thread.ofVirtual()
+        Thread vThread = Thread.ofVirtual().name("my-virtual").start(() -> {
+            System.out.println("Virtual thread: " + Thread.currentThread());
+        });
+        vThread.join();
+
+        // Way 2: Executor
+        try (var executor = Executors.newVirtualThreadPerTaskExecutor()) {
+            for (int i = 0; i < 5; i++) {
+                int id = i;
+                executor.submit(() -> {
+                    System.out.println("Task " + id + " on " + Thread.currentThread());
+                });
+            }
+        } // Auto-shutdown with try-with-resources
+    }
+}
+
+Platform Thread vs Virtual Thread:
+  Platform Thread -> Mapped 1:1 to OS thread. Heavy (~1MB stack). Limited count.
+  Virtual Thread  -> Many-to-one on carrier threads. Lightweight (~KB). Millions OK.
+
+--------------------------------------------------------------------------------
+7. STREAM THREADS — PARALLEL STREAMS
+--------------------------------------------------------------------------------
+
+Java Streams (java.util.stream) can run in parallel using the Fork/Join pool.
+
+===== Sequential Stream =====
+
+import java.util.List;
+
+public class SequentialStream {
+    public static void main(String[] args) {
+        List<Integer> numbers = List.of(1, 2, 3, 4, 5, 6, 7, 8, 9, 10);
+
+        int sum = numbers.stream()
+                         .filter(n -> n % 2 == 0)
+                         .mapToInt(Integer::intValue)
+                         .sum();
+
+        System.out.println("Sum of evens: " + sum); // 30
+    }
+}
+
+===== Parallel Stream =====
+
+import java.util.List;
+
+public class ParallelStreamExample {
+    public static void main(String[] args) {
+        List<Integer> numbers = List.of(1, 2, 3, 4, 5, 6, 7, 8, 9, 10);
+
+        // Method 1: .parallelStream()
+        int sum = numbers.parallelStream()
+                         .filter(n -> n % 2 == 0)
+                         .mapToInt(Integer::intValue)
+                         .sum();
+
+        System.out.println("Sum of evens (parallel): " + sum); // 30
+
+        // Method 2: .parallel() on an existing stream
+        numbers.stream()
+               .parallel()
+               .forEach(n -> System.out.println(n + " - " + Thread.currentThread().getName()));
+    }
+}
+
+How Parallel Streams Work:
+  - Uses the ForkJoinPool.commonPool() under the hood.
+  - Splits the source data (fork), processes in parallel, then merges (join).
+  - Default parallelism = number of CPU cores - 1.
+
+===== Parallel Stream with reduce =====
+
+import java.util.stream.LongStream;
+
+public class ParallelReduce {
+    public static void main(String[] args) {
+        long sum = LongStream.rangeClosed(1, 1_000_000)
+                             .parallel()
+                             .reduce(0L, Long::sum);
+
+        System.out.println("Sum: " + sum); // 500000500000
+    }
+}
+
+===== When to use Parallel Streams =====
+
+USE parallel streams when:
+  - Data set is LARGE (generally 10,000+ elements).
+  - Operations are CPU-intensive (computation, not I/O).
+  - Operations are STATELESS and INDEPENDENT.
+  - Order does NOT matter (or you use forEachOrdered).
+
+AVOID parallel streams when:
+  - Data set is small (overhead outweighs benefit).
+  - Operations have side effects (mutating shared state).
+  - Source is not easily splittable (e.g., LinkedList).
+  - Task involves I/O (use virtual threads instead).
+
+===== Parallel Stream Pitfall: Shared Mutable State =====
+
+import java.util.ArrayList;
+import java.util.List;
+
+public class ParallelPitfall {
+    public static void main(String[] args) {
+        List<Integer> results = new ArrayList<>(); // NOT thread-safe!
+
+        // WRONG - race condition on ArrayList
+        List.of(1,2,3,4,5).parallelStream()
+            .forEach(results::add); // Undefined behavior
+
+        System.out.println("Size (may be wrong): " + results.size());
+
+        // CORRECT - use collect() which is thread-safe
+        List<Integer> safe = List.of(1,2,3,4,5).parallelStream()
+                                  .collect(java.util.stream.Collectors.toList());
+        System.out.println("Size (correct): " + safe.size()); // 5
+    }
+}
+
+===== Custom ForkJoinPool for Parallel Streams =====
+
+import java.util.concurrent.ForkJoinPool;
+import java.util.stream.LongStream;
+
+public class CustomPoolStream {
+    public static void main(String[] args) throws Exception {
+        ForkJoinPool customPool = new ForkJoinPool(4); // 4 threads
+
+        long sum = customPool.submit(() ->
+            LongStream.rangeClosed(1, 1_000_000)
+                      .parallel()
+                      .sum()
+        ).get();
+
+        System.out.println("Sum: " + sum);
+        customPool.shutdown();
+    }
+}
+
+--------------------------------------------------------------------------------
+8. COMPLETABLEFUTURE (Async Programming)
+--------------------------------------------------------------------------------
+
+CompletableFuture is Java's way to write non-blocking async code chains.
+
+===== Basic async task =====
+
+import java.util.concurrent.CompletableFuture;
+
+public class CompletableFutureExample {
+    public static void main(String[] args) throws Exception {
+        CompletableFuture<String> future = CompletableFuture.supplyAsync(() -> {
+            // Runs in ForkJoinPool thread
+            return "Hello from async!";
+        });
+
+        // Non-blocking callback
+        future.thenAccept(result -> System.out.println(result));
+
+        future.get(); // Block only if needed
+    }
+}
+
+===== Chaining =====
+
+CompletableFuture.supplyAsync(() -> "Hello")
+    .thenApply(s -> s + " World")          // Transform result
+    .thenApply(String::toUpperCase)         // Chain another transform
+    .thenAccept(System.out::println);       // Consume result: HELLO WORLD
+
+===== Combining two futures =====
+
+CompletableFuture<Integer> price = CompletableFuture.supplyAsync(() -> 100);
+CompletableFuture<Integer> discount = CompletableFuture.supplyAsync(() -> 20);
+
+price.thenCombine(discount, (p, d) -> p - d)
+     .thenAccept(total -> System.out.println("Final: " + total)); // 80
+
+Common CompletableFuture Methods:
+  supplyAsync(Supplier)          -> Async task with return value.
+  runAsync(Runnable)             -> Async task with no return value.
+  thenApply(Function)            -> Transform result (like map).
+  thenAccept(Consumer)           -> Consume result, return void.
+  thenRun(Runnable)              -> Run something after, ignores result.
+  thenCombine(future, BiFunction)-> Combine two futures.
+  exceptionally(Function)        -> Handle exceptions.
+  join()                         -> Block and get result (no checked exception).
+  get()                          -> Block and get result (throws checked exception).
+
+--------------------------------------------------------------------------------
+9. THREAD SAFETY — KEY CONCEPTS
+--------------------------------------------------------------------------------
+
+volatile keyword:
+  - Ensures visibility of variable changes across threads.
+  - Does NOT guarantee atomicity.
+  - Use for simple flags.
+
+  private volatile boolean running = true;
+
+  public void stop() { running = false; }
+
+  public void run() {
+      while (running) {
+          // do work
+      }
+  }
+
+synchronized vs volatile vs AtomicXxx:
+  volatile     -> Visibility only. No compound operations.
+  synchronized -> Mutual exclusion + visibility. Heavier.
+  AtomicXxx    -> Lock-free thread-safe operations. Best for counters.
+
+Deadlock:
+  Occurs when two threads each hold a lock the other needs.
+
+  Thread 1: holds Lock A, waits for Lock B.
+  Thread 2: holds Lock B, waits for Lock A.
+  -> Neither can proceed. Program freezes.
+
+Prevention:
+  - Always acquire locks in the same order.
+  - Use tryLock() with timeout (ReentrantLock).
+  - Minimize lock scope.
+
+--------------------------------------------------------------------------------
+10. INTERVIEW QUESTIONS & ANSWERS
+--------------------------------------------------------------------------------
+
+Q1: What is the difference between start() and run()?
+A:  start() creates a new thread and calls run() in that new thread.
+    run() is just a regular method call — it runs on the CURRENT thread.
+    Always call start() to achieve multithreading.
+
+Q2: Can we start a thread twice?
+A:  No. Calling start() on an already-started thread throws
+    IllegalThreadStateException.
+
+Q3: What is the difference between Runnable and Callable?
+A:  Runnable.run() returns void and cannot throw checked exceptions.
+    Callable.call() returns a value and can throw checked exceptions.
+    Use Callable when you need a result from the thread.
+
+Q4: What is a daemon thread?
+A:  A daemon thread is a background thread that dies automatically when all
+    non-daemon (user) threads finish. Set with thread.setDaemon(true) before
+    calling start(). Example: garbage collector thread.
+
+Q5: What is synchronized in Java?
+A:  synchronized ensures only one thread can execute a block or method at a time
+    by acquiring a monitor lock on an object. It provides mutual exclusion and
+    memory visibility.
+
+Q6: What is the difference between wait() and sleep()?
+A:  sleep() pauses the thread for a fixed time; it does NOT release the lock.
+    wait() pauses the thread AND releases the lock; it must be called inside a
+    synchronized block and is used for inter-thread communication.
+
+Q7: What is a race condition?
+A:  A race condition occurs when two or more threads access shared data
+    concurrently and the result depends on the unpredictable order of execution.
+    Fix it with synchronization, atomic variables, or immutable data.
+
+Q8: What is a deadlock? How do you avoid it?
+A:  Deadlock: Two threads hold locks the other needs, causing permanent blocking.
+    Avoid by: acquiring locks in a consistent order, using tryLock() with
+    timeouts, and minimizing lock scope.
+
+Q9: What is the volatile keyword?
+A:  volatile guarantees that reads/writes to a variable are visible to all
+    threads (no caching in CPU registers). It does NOT guarantee atomicity,
+    so it's suitable for simple flags, not compound operations like count++.
+
+Q10: What is the difference between parallel streams and regular streams?
+A:  Regular streams process elements sequentially in the calling thread.
+    Parallel streams split the source, process chunks concurrently across
+    multiple threads (ForkJoinPool), then merge results. Parallel streams
+    are faster only for large, CPU-intensive, stateless operations.
+
+Q11: What are virtual threads (Java 21)?
+A:  Virtual threads are lightweight JVM-managed threads (Project Loom).
+    They are cheap to create (millions can exist), making them ideal for
+    I/O-bound tasks. They are NOT faster than platform threads for CPU-bound
+    work. Created via Thread.ofVirtual() or newVirtualThreadPerTaskExecutor().
+
+Q12: What is the ExecutorService and why use it?
+A:  ExecutorService manages a pool of threads, handles task submission,
+    scheduling, and lifecycle. It avoids the overhead of creating raw threads
+    for every task and provides features like Future for result retrieval and
+    proper shutdown handling.
+
+Q13: What is a Future in Java?
+A:  A Future represents the result of an asynchronous computation. You can
+    check if it's done (isDone()), cancel it (cancel()), or block and get the
+    result (get()). CompletableFuture extends this with chaining and callbacks.
+
+Q14: When should you NOT use parallel streams?
+A:  - Small data sets (overhead > benefit).
+    - Stateful or order-dependent operations.
+    - Shared mutable state (thread-safety issues).
+    - I/O-bound tasks (use virtual threads instead).
+
+Q15: What is the difference between Thread and Runnable?
+A:  Thread is a class that represents a thread of execution.
+    Runnable is a functional interface representing a task.
+    Prefer Runnable because Java has single inheritance, and it separates
+    the task from the thread mechanism, making it compatible with Executors.
+
+Q16: What happens if an exception is thrown inside a thread's run() method?
+A:  The exception propagates up to the JVM's uncaught exception handler.
+    The thread terminates. Other threads are unaffected. You can set a custom
+    handler with thread.setUncaughtExceptionHandler(...).
+
+Q17: What is Thread.join()?
+A:  join() makes the calling thread wait until the target thread finishes.
+    Useful to ensure a thread completes before the main thread proceeds.
+
+Q18: What is the ForkJoinPool?
+A:  A special thread pool optimized for divide-and-conquer tasks. It uses
+    work-stealing: idle threads "steal" tasks from busy threads' queues.
+    Parallel streams and CompletableFuture use the common ForkJoinPool by default.
+
+Q19: What is the difference between synchronized and ReentrantLock?
+A:  synchronized is simpler, built into the language, and auto-releases.
+    ReentrantLock (java.util.concurrent.locks) gives more control:
+    tryLock(), lockInterruptibly(), and fairness policies. Use ReentrantLock
+    when you need advanced features; synchronized for simple cases.
+
+Q20: What is thread starvation?
+A:  Starvation occurs when a low-priority thread never gets CPU time because
+    high-priority threads keep running. Avoid by using fair locks or not
+    relying on thread priorities.
+
+================================================================================
+                           QUICK REFERENCE SUMMARY
+================================================================================
+
+Creating Threads:
+  1. extends Thread -> override run() -> call start()
+  2. implements Runnable -> pass to Thread -> call start()   [PREFERRED]
+  3. Lambda shorthand: new Thread(() -> { ... }).start()
+  4. Virtual thread (Java 21): Thread.ofVirtual().start(() -> { ... })
+
+Choosing Approach:
+  Simple task           -> Runnable / Lambda
+  Need return value     -> Callable + Future
+  Many tasks            -> ExecutorService (thread pool)
+  Async chaining        -> CompletableFuture
+  I/O-bound, high scale -> Virtual Threads (Java 21)
+  Large data processing -> Parallel Streams
+
+Thread Safety Tools:
+  synchronized  -> Method or block-level mutual exclusion
+  volatile      -> Visibility guarantee for simple flags
+  AtomicInteger -> Lock-free thread-safe counters
+  ReentrantLock -> Advanced locking with tryLock, fairness
+  ConcurrentXxx -> Thread-safe collections (ConcurrentHashMap, etc.)
+
+================================================================================

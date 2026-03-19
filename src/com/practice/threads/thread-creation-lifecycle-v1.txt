@@ -1,0 +1,104 @@
+JAVA THREAD CREATION – NOTES
+
+HOW MANY WAYS TO CREATE THREADS IN JAVA?
+
+There are 4 main ways:
+
+1. USING THREAD CLASS
+class MyThread extends Thread {
+    public void run() {
+        System.out.println("Thread running");
+    }
+}
+new MyThread().start();
+
+----------------------------------
+
+2. USING RUNNABLE INTERFACE (RECOMMENDED)
+class MyRunnable implements Runnable {
+    public void run() {
+        System.out.println("Runnable running");
+    }
+}
+new Thread(new MyRunnable()).start();
+
+----------------------------------
+
+3. USING LAMBDA EXPRESSION (JAVA 8+)
+new Thread(() -> {
+    System.out.println("Lambda thread");
+}).start();
+
+----------------------------------
+
+4. USING CALLABLE + FUTURE (ADVANCED)
+import java.util.concurrent.*;
+
+Callable<Integer> task = () -> 10 + 20;
+
+ExecutorService service = Executors.newSingleThreadExecutor();
+Future<Integer> result = service.submit(task);
+
+System.out.println(result.get());
+
+----------------------------------
+
+THREAD LIFECYCLE
+
+1. NEW
+Thread is created but not started
+
+2. RUNNABLE
+Thread is ready to run (waiting for CPU)
+
+3. RUNNING
+Thread is executing
+
+4. WAITING / BLOCKED
+Thread is waiting (sleep, join, I/O)
+
+5. TERMINATED
+Thread has finished execution
+
+----------------------------------
+
+EXAMPLE (Lifecycle Demo)
+
+Thread t = new Thread(() -> {
+    System.out.println("Running...");
+});
+
+System.out.println(t.getState()); // NEW
+t.start();
+System.out.println(t.getState()); // RUNNABLE/RUNNING
+
+----------------------------------
+
+BONUS: EXECUTORS (BEST PRACTICE)
+
+ExecutorService service = Executors.newFixedThreadPool(3);
+
+service.submit(() -> {
+    System.out.println("Task executed");
+});
+
+service.shutdown();
+
+----------------------------------
+
+INTERVIEW SUMMARY:
+
+Q: How many ways to create threads?
+A: 4 ways:
+   1. Thread class
+   2. Runnable interface
+   3. Lambda expression
+   4. Callable + Future
+
+Q: What is thread lifecycle?
+A: NEW → RUNNABLE → RUNNING → WAITING/BLOCKED → TERMINATED
+
+BEST PRACTICE:
+Use ExecutorService instead of creating threads manually.
+
+END OF FILE

@@ -1,0 +1,109 @@
+========================================================
+1. THREAD FUNDAMENTALS
+========================================================
+• Thread = smallest unit of execution inside a process
+• Java supports multithreading from the beginning
+• Main thread is created automatically when program starts
+
+========================================================
+2. TWO CLASSIC WAYS TO CREATE THREADS
+========================================================
+
+A) Extend Thread class (simple, but limits inheritance)
+────────────────────────────────────────────────────────
+public class MyTask extends Thread {
+    @Override
+    public void run() {
+        System.out.println("Thread ID: " + Thread.currentThread().getId());
+    }
+}
+
+// Usage
+MyTask t = new MyTask();
+t.start();           // ← correct
+// t.run();          // ← WRONG (no new thread created)
+
+B) Implement Runnable (preferred – more flexible)
+──────────────────────────────────────────────────
+public class MyJob implements Runnable {
+    @Override
+    public void run() {
+        for (int i = 1; i <= 5; i++) {
+            System.out.println(Thread.currentThread().getName() + " → " + i);
+            try { Thread.sleep(400); } catch (InterruptedException e) {}
+        }
+    }
+}
+
+// Usage (most common style)
+Thread worker = new Thread(new MyJob(), "Worker-1");
+worker.start();
+
+C) Java 8+ Lambda (most concise)
+────────────────────────────────
+new Thread(() -> {
+    System.out.println("Lambda thread running");
+}, "Quick-Task").start();
+
+========================================================
+3. VERY COMMON EXAMPLE – TWO COUNTERS
+========================================================
+class Counter extends Thread {
+    private String name;
+    public Counter(String name) { this.name = name; }
+
+    @Override
+    public void run() {
+        for (int i = 1; i <= 6; i++) {
+            System.out.printf("%s → %d%n", name, i);
+            try { Thread.sleep(300); } catch (Exception ignored) {}
+        }
+    }
+}
+
+public class Demo {
+    public static void main(String[] args) throws InterruptedException {
+        Counter a = new Counter("Alice");
+        Counter b = new Counter("Bob  ");
+
+        a.start();
+        b.start();
+
+        a.join();   // main waits for Alice
+        b.join();   // main waits for Bob
+
+        System.out.println("Both finished → main continues");
+    }
+}
+
+========================================================
+4. PARALLEL STREAMS (the "stream threads" people talk about)
+─────────────────────────────────────────────────────────────
+List<Integer> numbers = Arrays.asList(1,2,3,4,5,6,7,8,9,10);
+
+// Single-threaded
+numbers.stream().forEach(n ->
+    System.out.println(n + " → " + Thread.currentThread().getName()));
+
+// Multi-threaded (uses ForkJoinPool.commonPool())
+numbers.parallelStream().forEach(n ->
+    System.out.println(n + " → " + Thread.currentThread().getName()));
+
+Important notes:
+• Order is NOT guaranteed in parallelStream()
+• Use .forEachOrdered() if order matters
+• Great for large CPU-bound tasks
+• Avoid on small collections or I/O heavy work
+
+========================================================
+5. QUICK REFERENCE – MOST USED METHODS
+========================================================
+start()      → begin thread execution
+run()        → logic (don't call directly)
+sleep(ms)    → pause current thread
+join()       → wait for another thread to die
+setDaemon()  → background thread (JVM won't wait)
+interrupt()  → request thread to stop
+isInterrupted() / interrupted()
+
+========================================================

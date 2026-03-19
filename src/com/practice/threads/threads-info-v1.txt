@@ -1,0 +1,284 @@
+===========================================
+JAVA THREADS + STREAM API
+===========================================
+PART 1: BASIC JAVA THREADS
+==========================
+
+1. WHAT IS A THREAD?
+---------------------
+- A thread is a lightweight process
+- Used for concurrent execution
+- Java supports multithreading
+
+
+2. CREATING THREAD (2 WAYS)
+----------------------------
+
+(1) Extending Thread class
+---------------------------
+class MyThread extends Thread {
+    public void run() {
+        System.out.println("Thread running...");
+    }
+}
+
+public class Main {
+    public static void main(String[] args) {
+        MyThread t1 = new MyThread();
+        t1.start();
+    }
+}
+
+
+(2) Implementing Runnable (BEST PRACTICE)
+------------------------------------------
+class MyRunnable implements Runnable {
+    public void run() {
+        System.out.println("Runnable thread running...");
+    }
+}
+
+public class Main {
+    public static void main(String[] args) {
+        Thread t1 = new Thread(new MyRunnable());
+        t1.start();
+    }
+}
+
+
+(3) Using Lambda (Modern Way)
+------------------------------
+Thread t = new Thread(() -> {
+    System.out.println("Thread using lambda");
+});
+t.start();
+
+
+3. THREAD METHODS
+------------------
+
+start()  → starts thread  
+run()    → contains logic  
+sleep()  → pause thread  
+join()   → wait for thread  
+currentThread() → get thread info  
+
+Example:
+---------
+Thread t = new Thread(() -> {
+    System.out.println(Thread.currentThread().getName());
+});
+t.start();
+
+
+4. MULTIPLE THREADS EXAMPLE
+----------------------------
+
+for (int i = 0; i < 5; i++) {
+    new Thread(() -> {
+        System.out.println(Thread.currentThread().getName());
+    }).start();
+}
+
+
+5. THREAD SAFETY (IMPORTANT)
+----------------------------
+
+Problem:
+---------
+List<Integer> list = new ArrayList<>();
+
+new Thread(() -> list.add(1)).start(); // unsafe
+
+
+Solution:
+---------
+List<Integer> list = Collections.synchronizedList(new ArrayList<>());
+
+
+========================================================
+PART 2: STREAM API (SEQUENTIAL)
+========================================================
+
+1. WHAT IS STREAM?
+-------------------
+- Used to process collections
+- Functional style programming
+- Does NOT store data
+
+
+2. SIMPLE STREAM EXAMPLE
+-------------------------
+
+List<Integer> list = List.of(1,2,3,4,5);
+
+list.stream()
+    .filter(n -> n % 2 == 0)
+    .forEach(System.out::println);
+
+
+3. COMMON OPERATIONS
+---------------------
+
+filter()   → condition  
+map()      → transform  
+forEach()  → iterate  
+collect()  → convert  
+reduce()   → aggregate  
+
+
+Example:
+---------
+List<String> names = List.of("A", "BB", "CCC");
+
+names.stream()
+     .map(String::length)
+     .forEach(System.out::println);
+
+
+========================================================
+PART 3: PARALLEL STREAM (THREADS IN STREAM)
+========================================================
+
+1. WHAT IS PARALLEL STREAM?
+----------------------------
+- Uses multiple threads internally
+- Based on ForkJoinPool
+- Improves performance for large data
+
+
+2. HOW TO USE
+--------------
+
+list.parallelStream()
+
+OR
+
+list.stream().parallel()
+
+
+3. SIMPLE EXAMPLE
+------------------
+
+List<Integer> nums = List.of(1,2,3,4,5);
+
+nums.parallelStream()
+    .forEach(n -> {
+        System.out.println(Thread.currentThread().getName() + " -> " + n);
+    });
+
+
+4. SEQUENTIAL VS PARALLEL
+--------------------------
+
+Sequential:
+list.stream()
+
+Parallel:
+list.parallelStream()
+
+
+5. CUSTOM CLASS EXAMPLE
+------------------------
+
+class Employee {
+    int id;
+    String name;
+    double salary;
+
+    // constructor + getters + setters
+}
+
+List<Employee> employees = List.of(
+    new Employee(1, "A", 50000),
+    new Employee(2, "B", 60000)
+);
+
+employees.parallelStream()
+         .filter(e -> e.getSalary() > 55000)
+         .forEach(System.out::println);
+
+
+6. ADVANCED EXAMPLES
+---------------------
+
+(1) Parallel Reduce
+--------------------
+int sum = IntStream.range(1, 1000)
+                   .parallel()
+                   .reduce(0, Integer::sum);
+
+
+(2) Parallel Collect
+----------------------
+List<Integer> result =
+    nums.parallelStream()
+        .collect(Collectors.toList());
+
+
+7. IMPORTANT RULES
+-------------------
+
+DO NOT use parallel streams when:
+- Small data
+- I/O operations
+- Shared mutable state
+
+BAD:
+-----
+List<Integer> result = new ArrayList<>();
+nums.parallelStream().forEach(result::add);
+
+
+GOOD:
+------
+nums.parallelStream()
+    .collect(Collectors.toList());
+
+
+8. ORDERING
+------------
+
+forEach()        → unordered  
+forEachOrdered() → ordered  
+
+
+========================================================
+INTERVIEW QUESTIONS
+========================================================
+
+Q1: Difference between Thread and Stream?
+Ans:
+Thread → manual concurrency  
+Stream → functional processing  
+
+Q2: What is parallelStream()?
+Ans:
+Processes data using multiple threads.
+
+Q3: When to use parallel streams?
+Ans:
+Large data + CPU-intensive tasks
+
+Q4: Why avoid shared state?
+Ans:
+Leads to race conditions
+
+Q5: Which is better: Runnable or Thread?
+Ans:
+Runnable (more flexible)
+
+Q6: Is parallel always faster?
+Ans:
+No (overhead exists)
+
+
+========================================================
+BEST PRACTICES
+========================================================
+
+- Learn threads first, then streams  
+- Use parallel only for large datasets  
+- Avoid shared mutable data  
+- Prefer collect() over mutation  
+- Benchmark performance  

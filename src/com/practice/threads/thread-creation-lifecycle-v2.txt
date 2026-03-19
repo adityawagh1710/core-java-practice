@@ -1,0 +1,120 @@
+╔════════════════════════════════════════════════════════════════════════════╗
+║         JAVA THREADS – CREATION + LIFECYCLE (Updated March 2026)           ║
+║                                                                            ║
+║  Covers all common creation methods + full thread lifecycle diagram        ║
+╚════════════════════════════════════════════════════════════════════════════╝
+
+
+1. FUNDAMENTAL RULE
+╚════════════════════════════════════════════════════════════════════════════
+There is only ONE way to actually start a thread:
+    → Call .start() on a Thread (or Thread subclass) object
+
+All other "ways" are just different styles to supply the code that runs inside run().
+
+╚════════════════════════════════════════════════════════════════════════════
+2. CLASSIC & MODERN WAYS TO CREATE THREADS
+╚════════════════════════════════════════════════════════════════════════════
+
+A) Extend Thread class
+public class MyThread extends Thread {
+    @Override
+    public void run() { ... }
+}
+MyThread t = new MyThread();
+t.start();
+
+B) Implement Runnable (preferred classic)
+public class MyTask implements Runnable {
+    public void run() { ... }
+}
+new Thread(new MyTask(), "Worker-1").start();
+
+C) Lambda (Java 8+ – most common today)
+new Thread(() -> { ... }, "Quick-Task").start();
+
+D) Callable + ExecutorService (for return value)
+Callable<String> task = () -> "Done";
+ExecutorService ex = Executors.newFixedThreadPool(4);
+Future<String> f = ex.submit(task);
+
+E) Virtual Thread – Direct (Java 21+)
+Thread.ofVirtual().start(() -> { ... });
+
+F) Virtual Thread Executor (recommended for high concurrency 2025–2026)
+try (var executor = Executors.newVirtualThreadPerTaskExecutor()) {
+    executor.submit(() -> handleRequest());
+}
+
+G) Structured Concurrency + Virtual Threads (clean parallel tasks)
+try (var scope = new StructuredTaskScope.ShutdownOnFailure()) {
+    var sub1 = scope.fork(() -> fetchData1());
+    var sub2 = scope.fork(() -> fetchData2());
+    scope.join();
+    // use sub1.get(), sub2.get()
+}
+
+╚════════════════════════════════════════════════════════════════════════════
+3. THREAD LIFECYCLE – FULL STATES & TRANSITIONS
+╚════════════════════════════════════════════════════════════════════════════
+
+          ┌──────────────┐
+          │     NEW      │  ← Thread object created, but start() not called yet
+          └──────┬───────┘       (initialization phase – no OS thread yet)
+                 │
+                 ▼   .start() called → JVM requests OS to create native thread
+          ┌──────────────┐
+          │   RUNNABLE   │  ← Thread is eligible to run (in thread scheduler queue)
+          └──────┬───────┘       (most of its life is spent here)
+                 │
+        ┌────────┴────────┐
+        │                 │
+        ▼                 ▼
+┌──────────────┐   ┌────────────────────┐
+│   RUNNING    │◄─►│ BLOCKED / WAITING  │
+└──────────────┘   └────────────────────┘
+     (actually     - Blocked: waiting for monitor lock (synchronized)
+      executing)   - Waiting: wait(), join(), LockSupport.park()
+                   - Timed Waiting: sleep(), wait(timeout), join(timeout)
+
+                 │
+                 ▼   run() completes normally OR exception thrown (uncaught)
+          ┌──────────────┐
+          │  TERMINATED  │  ← Thread has finished execution (run() returned)
+          └──────────────┘       (cannot be restarted – IllegalThreadStateException)
+
+Key Initialization Details (NEW state):
+╚════════════════════════════════════════════════════════════════════════════
+• When you do: Thread t = new Thread(runnable);
+  → Thread object is created (Java heap)
+  → But NO native/OS thread exists yet
+  → Thread is in NEW state
+  → You can still set properties: name, priority, daemon, uncaught exception handler
+  → Once .start() is called → transitions to RUNNABLE
+  → You CANNOT call start() twice → IllegalThreadStateException
+  → You CAN call run() directly (but it runs in current thread – no new thread)
+
+Common Transitions Summary:
+• NEW → RUNNABLE           : .start()
+• RUNNABLE → RUNNING       : Scheduler selects it (invisible to programmer)
+• RUNNING → BLOCKED        : Trying to enter synchronized block (lock held)
+• RUNNING → WAITING        : wait(), join(), LockSupport.park()
+• RUNNING → TIMED_WAITING  : sleep(), wait(timeout), join(timeout), parkNanos/parkUntil
+• Any → TERMINATED         : run() finishes (return / exception)
+
+4. QUICK VISUAL FLOW (ASCII)
+─────────────────────────────
+NEW ──start()──► RUNNABLE ◄──scheduler──► RUNNING
+                                 ▲                 │
+                                 │                 │
+                          yield / time slice     │
+                                 │                 ▼
+                          BLOCKED ◄──lock── WAITING / TIMED_WAITING
+                                 ▲                 │
+                                 └─────notify / timeout / lock released────┘
+                                                       │
+                                                       ▼
+                                                   TERMINATED
+
+
+╚════════════════════════════════════════════════════════════════════════════
