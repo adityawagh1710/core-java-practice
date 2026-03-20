@@ -1,5 +1,6 @@
 package com.practice.stream.collectors;
 
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -54,7 +55,8 @@ public class CustomFiCollectorStreamExample5 {
 						Collectors.toMap(
 								Employee::getName,
 								Employee::getSalary,
-								(oldValue, newValue) -> newValue
+								(oldValue, newValue) -> newValue,
+								LinkedHashMap::new
 						)
 				);
 		
